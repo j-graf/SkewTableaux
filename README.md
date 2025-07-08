@@ -13,7 +13,7 @@ entryList = {1,2,3,3,9}
 T = skewTableau(lam,mu,entryList)
 ```
 
-- Get the tableau as a net, or as a pretty net:
+- Get the tableau as a basic net, or as a pretty net:
 ```
 net T
 pretty T

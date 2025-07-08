@@ -1,7 +1,7 @@
 newPackage(
     "SkewTableaux",
     Version => "0.1",
-    Date => "June 30, 2025",
+    Date => "July 8, 2025",
     Authors => {
 	{Name => "John Graf", Email => "grafjohnr@gmail.com", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",
@@ -117,7 +117,110 @@ SkewTableau_Sequence := (T,thePosition)->(
     ans
     )
 
-net SkewTableau := T ->(
+pretty SkewTableau := T -> (
+    fixedBoxWidth := true;
+    muFiller := " "; --or "░"
+    
+    (lam,mu) := shape0 T;
+
+     if size T == 0 then return "∅";
+
+    colList := for colIndex from 0 to lam#0-1 list (
+        currCol := T_colIndex;
+        colWidth := max for theBox in currCol list (
+            if theBox === null then (
+                1
+                ) else (
+                #toString(theBox)
+                )
+            );
+        if fixedBoxWidth then colWidth = max for theBox in entries T list(
+            if theBox === null then (
+                1
+                ) else (
+                #toString(theBox)
+                )
+            );
+        
+        currColNet := if (colIndex >= mu#0 and colIndex < lam#0) then concatenate(colWidth:"─") else " ";
+        
+        for rowIndex from 0 to #currCol-1 do (
+            theBox := currCol#rowIndex;
+            nextBox := if rowIndex == #currCol-1 then null else currCol#(rowIndex+1);
+            boxString := if theBox === null then concatenate(colWidth:muFiller) else toString theBox;
+            boxSep := if ((theBox =!= null and rowIndex == #currCol-1) or nextBox =!= null) then concatenate(colWidth:"─") else " ";
+            
+            currColNet = currColNet||boxString||boxSep;
+            );
+        currColNet
+        );
+
+    sepList := for colIndex from 0 to lam#0 list (
+        leftCol := if colIndex == 0 then null else T_(colIndex-1);
+        rightCol := if colIndex == lam#0 then null else T_(colIndex);
+
+        currSepNet := if (colIndex > mu#0 and colIndex < lam#0) then (
+            "┬"
+            ) else if (colIndex == mu#0 and colIndex < lam#0) then (
+            "┌"
+            ) else if (colIndex > mu#0 and colIndex == lam#0) then (
+            "┐"
+            ) else (
+            " "
+            );
+        
+        for rowIndex from 0 to #lam-1 do (
+            isBoxLeft := leftCol =!= null and rowIndex < #leftCol and leftCol#rowIndex =!= null;
+            isBoxRight := rightCol =!= null and rowIndex < #rightCol and rightCol#rowIndex =!= null;
+
+            isBoxLeftDown := leftCol =!= null and rowIndex+1 < #leftCol and leftCol#(rowIndex+1) =!= null;
+            isBoxRightDown := rightCol =!= null and rowIndex+1 < #rightCol and rightCol#(rowIndex+1) =!= null;
+            
+
+            sepString := if isBoxLeft or isBoxRight then "│" else " ";
+
+            nextUp := isBoxLeft or isBoxRight;
+            nextDown := isBoxLeftDown or isBoxRightDown;
+            nextLeft := isBoxLeft or isBoxLeftDown;
+            nextRight := isBoxRight or isBoxRightDown;
+            
+            nextSep := if nextUp and nextDown and nextLeft and nextRight then (
+                "┼"
+                ) else if nextUp and nextDown and nextLeft then (
+                "┤"
+                ) else if nextUp and nextDown and nextRight then (
+                "├"
+                ) else if nextUp and nextLeft and nextRight then (
+                "┴"
+                ) else if nextUp and nextLeft then (
+                "┘"
+                ) else if nextUp and nextRight then (
+                "└"
+                ) else if nextDown and nextLeft and nextRight then (
+                "┬"
+                ) else if nextDown and nextLeft then (
+                "┐"
+                ) else if nextDown and nextRight then (
+                "┌"
+                ) else (
+                " "
+                );
+            
+            
+            currSepNet = currSepNet||sepString||nextSep;
+            );
+        currSepNet
+        );
+    
+
+    ans := "";
+    for theNet in mingle {sepList,colList} do (
+        ans = ans|theNet;
+        );
+    ans
+    )
+
+net SkewTableau := T -> (
     (lam,mu) := shape0 T;
 
     if sum toList lam - sum toList mu == 0 then return "∅";
@@ -126,8 +229,8 @@ net SkewTableau := T ->(
         currCol := T_colIndex;
         currColNet := " ";
         if all(currCol, theBox -> theBox === null) then (
-            for i from 0 to #lam-1 do (
-                currColNet = currColNet||"░";
+            for i from 0 to #currCol-1 do (
+                currColNet = currColNet||" "; --or "░"
                 );
             ) else (
             colWidth := max for theBox in currCol list (
@@ -173,10 +276,12 @@ net SkewTableau := T ->(
         );
     lastColSep := " ";
     for i from 0 to #lam-1 do (
-        if lam#i == lam#0 then (
+        if lam#i == lam#0 and lam#i > mu#i then (
             lastColSep = lastColSep||"|";
+            ) else if lam#i == lam#0 and lam#i == mu#i then (
+            lastColSep = lastColSep||" ";
             ) else (
-            break
+            break;
             );
         );
     colSepList = append(colSepList,lastColSep);
@@ -213,6 +318,23 @@ conjugate SkewTableau := T -> (
     entryList' := flatten for colIndex from 0 to lam#0-1 list colEntries(colIndex,T);
 
     skewTableau(lam',mu',entryList')
+    )
+
+components SkewTableau := T -> (
+    (lam,mu) := shape0 T;
+
+    componentStarts := select(0..(#lam-1),i -> if lam#i == mu#i then (false) else (i == 0 or lam#i <= mu#(i-1)));
+    componentEnds := select(0..(#lam-1),i -> if lam#i == mu#i then (false) else (i == #lam-1 or mu#i >= lam#(i+1)));
+
+    for i from 0 to #componentStarts-1 list (
+        partIndices := toList((componentStarts#i)..(componentEnds#i));
+        lam' := new Partition from for theIndex in partIndices list (lam#theIndex-mu#(partIndices#-1));
+        mu' := new Partition from for theIndex in partIndices list (mu#theIndex-mu#(partIndices#-1));
+        entryList' := flatten for theIndex in partIndices list rowEntries(theIndex,T);
+        skewTableau(lam',mu',entryList')
+        )
+    
+    --(componentStarts,componentEnds)
     )
 
 SkewTableau == SkewTableau := (T1,T2) -> (

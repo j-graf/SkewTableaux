@@ -13,7 +13,7 @@ entryList = {1,2,3,3,9}
 T = skewTableau(lam,mu,entryList)
 ```
 
-- Check equality (same set difference $\lambda/\mu$ and filling) and strict equality (same shape and filling):
+- Check equality (same disconnected components) and strict equality (exactly same shape and filling):
 ```
 lam2 = new Partition from {5,4,3}
 mu2 = new Partition from {4,2,1}

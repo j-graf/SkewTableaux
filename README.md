@@ -13,6 +13,12 @@ entryList = {1,2,3,3,9}
 T = skewTableau(lam,mu,entryList)
 ```
 
+- Get the tableau as a net, or as a pretty net:
+```
+net T
+pretty T
+```
+
 - Check equality (same disconnected components) and strict equality (exactly same shape and filling):
 ```
 lam2 = new Partition from {5,4,3}

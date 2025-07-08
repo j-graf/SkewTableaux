@@ -79,6 +79,11 @@ indexToPosition(3,T)
 positionToIndex((2,0),T)
 ```
 
+- Get a list of a tableau's connected components:
+```
+components T
+```
+
 ## Algorithms
 
 - Get a (bagged) list of all SSYT of a given shape, and given maximum box entry (default $\ell(\lambda) $):

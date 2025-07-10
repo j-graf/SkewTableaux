@@ -11,9 +11,10 @@ newPackage(
 
 export {"SkewTableau", "skewTableau",
         "shape", "shape0", "reducedShape", "rowEntries", "colEntries", "isSkew", "indexToPosition", "positionToIndex",
-        "allSSYT"}
+        "allSSYT", "JTtableaux"}
 
---needsPackage "SpechtModule"
+needsPackage "Permutations"
+needsPackage "SpechtModule"
 
 SkewTableau = new Type of HashTable
 skewTableau = method(TypicalValue => SkewTableau)
@@ -39,10 +40,10 @@ skewTableau (Partition,List) := (lam,theList)->(
     skewTableau(lam,new Partition from {},theList)
     )
 skewTableau (Partition,Partition) := (lam,mu) -> (
-    skewTableau(lam,mu,toList ((sum toList lam - sum toList mu):0))
+    skewTableau(lam,mu,toList ((sum toList lam - sum toList mu):""))
     )
 skewTableau Partition := lam -> (
-    skewTableau(lam,new Partition from {},toList ((sum toList lam):0))
+    skewTableau(lam,new Partition from {},toList ((sum toList lam):""))
     )
 
 shape = method(TypicalValue => Sequence)
@@ -117,37 +118,32 @@ SkewTableau_Sequence := (T,thePosition)->(
     ans
     )
 
-pretty SkewTableau := T -> (
-    fixedBoxWidth := true;
-    muFiller := " "; --or "░"
+net SkewTableau := T -> (
+    muFiller := "■";
     
     (lam,mu) := shape0 T;
 
-     if size T == 0 then return "∅";
+    if #lam == 0 then return "∅";
+
+    colWidth := if #entries T == 0 then 1 else max for theBox in entries T list (
+        if theBox === null then (
+            1
+            ) else (
+            #toString(theBox)
+            )
+        );
+    colWidth = max {colWidth + 2,3};
 
     colList := for colIndex from 0 to lam#0-1 list (
         currCol := T_colIndex;
-        colWidth := max for theBox in currCol list (
-            if theBox === null then (
-                1
-                ) else (
-                #toString(theBox)
-                )
-            );
-        if fixedBoxWidth then colWidth = max for theBox in entries T list(
-            if theBox === null then (
-                1
-                ) else (
-                #toString(theBox)
-                )
-            );
-        
         currColNet := if (colIndex >= mu#0 and colIndex < lam#0) then concatenate(colWidth:"─") else " ";
         
         for rowIndex from 0 to #currCol-1 do (
             theBox := currCol#rowIndex;
             nextBox := if rowIndex == #currCol-1 then null else currCol#(rowIndex+1);
-            boxString := if theBox === null then concatenate(colWidth:muFiller) else toString theBox;
+            boxString := if theBox === null then concatenate((colWidth-2):muFiller) else toString theBox;
+            if #boxString == 0 then boxString = " ";
+            boxString = " "|boxString|" ";
             boxSep := if ((theBox =!= null and rowIndex == #currCol-1) or nextBox =!= null) then concatenate(colWidth:"─") else " ";
             
             currColNet = currColNet||boxString||boxSep;
@@ -217,20 +213,23 @@ pretty SkewTableau := T -> (
     for theNet in mingle {sepList,colList} do (
         ans = ans|theNet;
         );
-    ans
+    ans^1
     )
 
+-*
 net SkewTableau := T -> (
     (lam,mu) := shape0 T;
 
-    if sum toList lam - sum toList mu == 0 then return "∅";
+    if #lam == 0 then return "∅";
+
+    muFiller := "░"; --either " " or "■" or "░"
     
     colList := for colIndex from 0 to lam#0-1 list (
         currCol := T_colIndex;
         currColNet := " ";
         if all(currCol, theBox -> theBox === null) then (
             for i from 0 to #currCol-1 do (
-                currColNet = currColNet||" "; --or "░"
+                currColNet = currColNet||muFiller;
                 );
             ) else (
             colWidth := max for theBox in currCol list (
@@ -294,8 +293,23 @@ net SkewTableau := T -> (
     for i from 0 to #colList-1 do (
         ans = ans|colList#i|colSepList#(i+1);
         );
-    ans^1
-        
+    ans^1   
+    )
+*-
+
+tex SkewTableau := T -> (
+    -- \usepackage{atableau}
+    (lam,mu) := shape T;
+    
+    ans := "\\SkewTableau[skew border, skew boxes] "|toString(toList mu);
+    filling := for i from 0 to #lam-1 list (
+        currRow := rowEntries(i,T);
+        concatenate for theBox in currRow list (
+            boxString := toString theBox;
+            if #boxString == 1 then boxString else "{"|boxString|"}"
+            )
+        );
+    ans|toString(filling)
     )
 
 entries SkewTableau := T -> T#values
@@ -312,6 +326,8 @@ toList SkewTableau := T -> (
 
 conjugate SkewTableau := T -> (
     (lam,mu) := shape0 T;
+
+    if #lam == 0 then return T;
     
     lam' := conjugate lam;
     mu' := conjugate mu;
@@ -489,12 +505,25 @@ addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
 
 allSSYT = method(TypicalValue => List)
 allSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
+    (lamList,muList) := (toList lam, toList mu);
+
+    if rsort lamList != lamList or rsort muList != muList then error "expected partitions to be weakly decreasing";
+
+    lamList = delete(0,lamList);
+    muList = delete(0,muList);
+    
+    if any(lamList|muList, thePart -> thePart < 0) then return Bag {};
+    if #muList > #lamList or any(0..(#muList-1), i -> mu#i > lam#i) then return Bag {};
+    
     T := skewTableau(lam,mu);
 
     (lam,mu) = shape0 T;
     (lam',mu') := shape0 conjugate T;
 
-    if any(0..(lam#0-1),i -> #colEntries(i,T) > maxEntry) then return {};
+    if #lam == 0 then return Bag {skewTableau(new Partition from {})};
+    if any(0..(lam#0-1),i -> #colEntries(i,T) > maxEntry) then return Bag {};
+    --if all(0..(#lam-1), i -> lam#i == mu#i) then return Bag {skewTableau(lam,mu)};
+    
 
     maxT := maxSSYT(lam,mu);
     minT := minSSYT(lam,mu,maxEntry);
@@ -517,8 +546,8 @@ allSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     for theIndex from 1 to size T do (
         recurse(-theIndex,maxT);
         );
-    
-    ans
+
+    Bag ans
     )
 allSSYT (Partition,Partition) := (lam,mu) -> (
     maxEntry := #(delete(0,toList lam));
@@ -532,4 +561,55 @@ allSSYT Partition := lam -> (
     mu := new Partition from {0};
     maxEntry := #(delete(0,toList lam));
     allSSYT(lam,mu,maxEntry)
+    )
+
+JTtableaux = method(TypicalValue => List)
+JTtableaux (Partition,Partition,ZZ) := (lam,mu,N) -> (
+    T := skewTableau(lam,mu);
+    (lam,mu) = shape0 T;
+
+    indexMatrix := map(ZZ^(#lam),ZZ^(#lam),(i,j) -> lam#i-mu#j-i+j);
+    indexList := sort unique flatten entries indexMatrix;
+    
+    tabList := for theIndex in indexList list (
+        if theIndex < 0 then (
+            {}
+            ) else (
+            toList allSSYT(new Partition from {theIndex},new Partition from {0},N)
+            )
+        );
+    
+    
+    
+    permList := permutations (#lam);
+    signList := for thePerm in permList list (permutationSign thePerm);
+    indexProdList := for thePerm in permList list (
+        for i from 0 to #lam-1 list (
+            j := thePerm#i;
+            lam#i-mu#j-i+j
+            )
+        );
+    
+    ans := for j from 0 to #indexProdList-1 list (
+        theProd := indexProdList#j;
+        theIndex := position(indexList,theInd -> theInd == theProd#0);
+        currProd := tabList#theIndex;
+
+        for i from 1 to #theProd-1 do (
+            theIndex = position(indexList,theInd -> theInd == theProd#i);
+            currProd = (currProd ** tabList#theIndex)/splice;
+            );
+        --{permList#j} ** currProd
+        for tabSeq in currProd list (
+            wt := flatten for theT in tabSeq list entries theT;
+            wt = toSequence for i from 1 to max wt list number(wt, theNum -> theNum == i);
+            (wt,permList#j,signList#j,tabSeq)
+            )
+        );
+
+    Bag flatten ans
+    
+    )
+JTtableaux (Partition,Partition) := (lam,mu) -> (
+    JTtableaux(lam,mu,#lam)
     )

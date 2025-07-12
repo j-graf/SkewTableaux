@@ -1,7 +1,7 @@
 newPackage(
     "SkewTableaux",
-    Version => "0.1",
-    Date => "July 8, 2025",
+    Version => "0.2",
+    Date => "July 12, 2025",
     Authors => {
 	{Name => "John Graf", Email => "grafjohnr@gmail.com", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",
@@ -10,7 +10,8 @@ newPackage(
     )
 
 export {"SkewTableau", "skewTableau",
-        "shape", "shape0", "reducedShape", "rowEntries", "colEntries", "isSkew", "indexToPosition", "positionToIndex",
+        "shape", "shape0", "shapeReduced", "rowEntries", "colEntries", "colRange", "isSkew", "isYoungTableau",
+        "indexToPosition", "positionToIndex",
         "allSSYT", "JTtableaux"}
 
 needsPackage "Permutations"
@@ -19,20 +20,17 @@ needsPackage "SpechtModule"
 SkewTableau = new Type of HashTable
 skewTableau = method(TypicalValue => SkewTableau)
 skewTableau (Partition,Partition,List) := (lam,mu,theList)->(
+    maxLength := max {#lam,#mu};
+    lamPadded := new Partition from (toList(lam)|toList((maxLength-#lam):0));
+    muPadded := new Partition from (toList(mu)|toList((maxLength-#mu):0));
+    
+    if any(toList(0..(maxLength-1)),i -> muPadded#i > lamPadded#i) then error "must have mu#i <= lam#i for all i";
     if (sum toList lam - sum toList mu != #theList) then error "partition sizes do not match with the length of the list";
-    if (rsort toList lam != toList lam or rsort toList mu != toList mu) then error "partitions must be weakly decreasing";
-    if any(lam, thePart -> thePart < 0) or any(mu, thePart -> thePart < 0) then error "partitions must have non-negative parts";
     if any(theList, theElt -> theElt === null) then error "filling must not contain null entries";
-    
-    newLam := new Partition from delete(0,toList lam);
-    newMu := delete(0,toList mu);
-    if #newMu > #newLam then error "mu must be contained in lam";
-    newMu = new Partition from newMu|(toList((#newLam-#newMu):0));
-    if any(toList(0..(#newMu-1)),i -> newMu#i > newLam#i) then error "mu must be contained in lam";
-    
+
     new SkewTableau from {
-        "outerPartition" => newLam,
-        "innerPartition" => newMu,
+        "outerShape" => lam,
+        "innerShape" => mu,
         values => theList
         }
     )
@@ -46,260 +44,244 @@ skewTableau Partition := lam -> (
     skewTableau(lam,new Partition from {},toList ((sum toList lam):""))
     )
 
+isYoungTableau = method(TypicalValue => Boolean)
+isYoungTableau SkewTableau := T -> (
+    (lam,mu) := shape0 T;
+    lam = toList lam;
+    mu = toList mu;
+    
+    lam == rsort lam and mu == rsort mu and all(lam|mu, thePart -> thePart >= 0)
+    )
+
 shape = method(TypicalValue => Sequence)
+shape (Partition,Partition) := (lam,mu) -> (
+    lamNumTrailingZeros := # for i from 1 to #lam list (if lam#-i == 0 then 1 else break);
+    muNumTrailingZeros := # for i from 1 to #mu list (if mu#-i == 0 then 1 else break);
+
+    lamShortened := (toList lam)_(toList(0..(#lam-1-lamNumTrailingZeros)));
+    muShortened := (toList mu)_(toList(0..(#mu-1-muNumTrailingZeros)));
+
+    (new Partition from lamShortened, new Partition from muShortened)
+    )
 shape SkewTableau := T -> (
-    (new Partition from delete(0,toList(T#"outerPartition")),new Partition from delete(0,toList(T#"innerPartition")))
+    shape(T#"outerShape", T#"innerShape")
     )
 
 shape0 = method(TypicalValue => Sequence)
-shape0 SkewTableau := T -> (
-    (T#"outerPartition",T#"innerPartition")
-    )
 shape0 (Partition,Partition) := (lam,mu) -> (
-    shape0 skewTableau(lam,mu)
+    (lam,mu) = shape(lam,mu);
+    maxLength := max(#lam,#mu);
+
+    lamPadded := toList(lam)|toList((maxLength - #lam):0);
+    muPadded := toList(mu)|toList((maxLength - #mu):0);
+    
+    (new Partition from lamPadded, new Partition from muPadded)
+    )
+shape0 SkewTableau := T -> (
+    shape0 shape T
     )
 
-reducedShape = method(TypicalValue => Sequence)
-reducedShape SkewTableau := T -> (
-    (lam,mu) := shape0 T;
-
-    if mu#-1 == 0 then return shape T;
-
-    lamNew := delete(0,for thePart in lam list thePart - mu#-1);
-    muNew := delete(0,for thePart in mu list thePart - mu#-1);
-
-    (new Partition from lamNew, new Partition from muNew)
+shapeReduced = method(TypicalValue => Sequence)
+shapeReduced (Partition,Partition) := (lam,mu) -> (
+    (lam,mu) = shape0(lam,mu);
+    minMu := min toList mu;
+    
+    lamReduced := for thePart in lam list thePart - minMu;
+    muReduced := for thePart in mu list thePart - minMu;
+    
+    (new Partition from lamReduced, new Partition from muReduced)
+    )
+shapeReduced SkewTableau := T -> (
+    shapeReduced shape0 T
     )
 
 SkewTableau^ZZ := (T,rowIndex) -> (
     (lam,mu) := shape0 T;
+    colInds := colRange T;
 
     if rowIndex < 0 then (
         rowIndex = #lam + rowIndex;
         );
-
-    if rowIndex >= #lam then error "index out of bounds";
+    if rowIndex >= #lam or rowIndex < 0 then error "index out of bounds";
     
     numBoxesAbove := sum for i from 0 to rowIndex-1 list (lam#i-mu#i);
-    ans := toList(mu#rowIndex:null);
-    ans = ans|(for i from numBoxesAbove to numBoxesAbove+lam#rowIndex-mu#rowIndex-1 list T#values#i);
-    ans
+    emptyBoxesLeft := toList((mu#rowIndex - colInds#0):null);
+    filledBoxes := for i from numBoxesAbove to numBoxesAbove+lam#rowIndex-mu#rowIndex-1 list T#values#i;
+    emptyBoxesRight := toList((colInds#-1 - lam#rowIndex + 1):null);
+    
+    emptyBoxesLeft|filledBoxes|emptyBoxesRight
     )
 
 SkewTableau_ZZ := (T,colIndex) -> (
-    ans := {};
-
     (lam,mu) := shape0 T;
+    colInds := colRange T;
 
-    if colIndex < 0 then (
-        colIndex = lam#0 + colIndex;
-        );
+    if colIndex < colInds#0 or colIndex > colInds#-1 then error "index out of bounds";
 
-    if colIndex >= lam#0 or colIndex < 0 then error "index out of bounds";
-
-    for i from 0 to #lam-1 do (
-        if colIndex < mu#i then (
-            ans = ans|{null};
-            ) else if (colIndex >= lam#i) then (
-            break
+    for rowIndex from 0 to #lam-1 list (
+        if colIndex < mu#rowIndex or colIndex >= lam#rowIndex then (
+            null
             ) else (
-            numBoxesAbove := sum for j from 0 to i-1 list (toList lam - toList mu)#j;
-            numBoxesLeft := colIndex-mu#i;
-            ans = ans|{T#values#(numBoxesAbove+numBoxesLeft)};
-            );
-        );
-    ans
+            T^rowIndex#(colIndex-colInds#0)
+            )
+        )
     )
 
 SkewTableau_Sequence := (T,thePosition)->(
     (rowIndex,colIndex) := thePosition;
-    ans := T^rowIndex#colIndex;
+    colInds := colRange T;
+    
+    ans := T^rowIndex#(colIndex-colInds#0);
     if ans === null then error "index out of range";
     ans
     )
 
 net SkewTableau := T -> (
-    muFiller := "■";
-    
     (lam,mu) := shape0 T;
 
     if #lam == 0 then return "∅";
 
-    colWidth := if #entries T == 0 then 1 else max for theBox in entries T list (
-        if theBox === null then (
-            1
-            ) else (
-            #toString(theBox)
-            )
-        );
+    (muSmallest, lamLargest) := (min(min toList mu,0), max(max toList lam,0));
+    colWidth := if #entries T == 0 then 1 else max for theBox in entries T list #toString(theBox);
     colWidth = max {colWidth + 2,3};
-
-    colList := for colIndex from 0 to lam#0-1 list (
-        currCol := T_colIndex;
-        currColNet := if (colIndex >= mu#0 and colIndex < lam#0) then concatenate(colWidth:"─") else " ";
-        
-        for rowIndex from 0 to #currCol-1 do (
-            theBox := currCol#rowIndex;
-            nextBox := if rowIndex == #currCol-1 then null else currCol#(rowIndex+1);
-            boxString := if theBox === null then concatenate((colWidth-2):muFiller) else toString theBox;
-            if #boxString == 0 then boxString = " ";
-            boxString = " "|boxString|" ";
-            boxSep := if ((theBox =!= null and rowIndex == #currCol-1) or nextBox =!= null) then concatenate(colWidth:"─") else " ";
+    hasNegativeParts := any(toList(lam)|toList(mu), thePart -> thePart < 0);
+    
+    boxColumns := for colIndex from muSmallest to lamLargest-1 list (
+        currCol := if colIndex >= mu#0 and colIndex < lam#0 then concatenate(colWidth:"─") else concatenate(colWidth:" ");
+        for rowIndex from 0 to #lam-1 do (
+            isBox := colIndex >= mu#rowIndex and colIndex < lam#rowIndex;
+            isBoxBelow := rowIndex < #lam-1 and colIndex >= mu#(rowIndex+1) and colIndex < lam#(rowIndex+1);
             
-            currColNet = currColNet||boxString||boxSep;
+            boxString := " ";
+            if isBox then (
+                boxString = " "|toString((rowEntries(rowIndex,T))#(colIndex-mu#rowIndex))|" ";
+                ) else if (colIndex < 0 and colIndex >= lam#rowIndex) or (colIndex >= 0 and colIndex < mu#rowIndex) then (
+                boxString = " "|concatenate((colWidth-2):"■")|" ";
+                );
+            
+            belowString := " ";
+            if isBox or isBoxBelow then belowString = "─";
+            belowString = concatenate(colWidth:belowString);
+            
+            currCol = currCol||boxString||belowString;
             );
-        currColNet
+        currCol
         );
 
-    sepList := for colIndex from 0 to lam#0 list (
-        leftCol := if colIndex == 0 then null else T_(colIndex-1);
-        rightCol := if colIndex == lam#0 then null else T_(colIndex);
+    cornerChar := (leftUp,rightUp,leftDown,rightDown) -> (
+        cornerHash := new HashTable from {
+            "0000" => " ",
+            "0001" => "┌",
+            "0010" => "┐",
+            "0011" => "┬",
+            "0100" => "└",
+            "0101" => "├",
+            "0110" => "┼",
+            "0111" => "┼",
+            "1000" => "┘",
+            "1001" => "┼",
+            "1010" => "┤",
+            "1011" => "┼",
+            "1100" => "┴",
+            "1101" => "┼",
+            "1110" => "┼",
+            "1111" => "┼"
+            };
 
-        currSepNet := if (colIndex > mu#0 and colIndex < lam#0) then (
-            "┬"
-            ) else if (colIndex == mu#0 and colIndex < lam#0) then (
-            "┌"
-            ) else if (colIndex > mu#0 and colIndex == lam#0) then (
-            "┐"
-            ) else (
-            " "
-            );
+        theKey := concatenate({leftUp,rightUp,leftDown,rightDown} / (i -> if i then toString(1) else toString(0)));
+        
+        cornerHash#theKey
+        );
+
+    sepColumns := for colIndex from muSmallest to lamLargest list (
+        isBoxLeftUp := false;
+        isBoxRightUp := false;
+        isBoxRightDown := colIndex >= mu#0 and colIndex < lam#0;
+        isBoxLeftDown := colIndex-1 >= mu#0 and colIndex-1 < lam#0;
+        
+        currColNet := if colIndex == 0 and hasNegativeParts then (
+                "║"
+                ) else (
+                cornerChar(isBoxLeftUp,isBoxRightUp,isBoxLeftDown,isBoxRightDown)
+                );
         
         for rowIndex from 0 to #lam-1 do (
-            isBoxLeft := leftCol =!= null and rowIndex < #leftCol and leftCol#rowIndex =!= null;
-            isBoxRight := rightCol =!= null and rowIndex < #rightCol and rightCol#rowIndex =!= null;
 
-            isBoxLeftDown := leftCol =!= null and rowIndex+1 < #leftCol and leftCol#(rowIndex+1) =!= null;
-            isBoxRightDown := rightCol =!= null and rowIndex+1 < #rightCol and rightCol#(rowIndex+1) =!= null;
-            
+            isBoxLeft := colIndex-1 >= mu#rowIndex and colIndex-1 < lam#rowIndex;
+            isBoxRight := colIndex >= mu#rowIndex and colIndex < lam#rowIndex;
 
-            sepString := if isBoxLeft or isBoxRight then "│" else " ";
+            isBoxLeftUp = isBoxLeft;
+            isBoxRightUp = isBoxRight;
+            isBoxRightDown = rowIndex < #lam-1 and colIndex >= mu#(rowIndex+1) and colIndex < lam#(rowIndex+1);
+            isBoxLeftDown = rowIndex < #lam-1 and colIndex-1 >= mu#(rowIndex+1) and colIndex-1 < lam#(rowIndex+1);
 
-            nextUp := isBoxLeft or isBoxRight;
-            nextDown := isBoxLeftDown or isBoxRightDown;
-            nextLeft := isBoxLeft or isBoxLeftDown;
-            nextRight := isBoxRight or isBoxRightDown;
-            
-            nextSep := if nextUp and nextDown and nextLeft and nextRight then (
-                "┼"
-                ) else if nextUp and nextDown and nextLeft then (
-                "┤"
-                ) else if nextUp and nextDown and nextRight then (
-                "├"
-                ) else if nextUp and nextLeft and nextRight then (
-                "┴"
-                ) else if nextUp and nextLeft then (
-                "┘"
-                ) else if nextUp and nextRight then (
-                "└"
-                ) else if nextDown and nextLeft and nextRight then (
-                "┬"
-                ) else if nextDown and nextLeft then (
-                "┐"
-                ) else if nextDown and nextRight then (
-                "┌"
+            boxString := if colIndex == 0 and hasNegativeParts then (
+                "║"
+                ) else if isBoxRight or isBoxLeft then (
+                "│"
                 ) else (
                 " "
                 );
+
+            belowString := if colIndex == 0 and hasNegativeParts then (
+                "║"
+                ) else (
+                cornerChar(isBoxLeftUp,isBoxRightUp,isBoxLeftDown,isBoxRightDown)
+                );
             
-            
-            currSepNet = currSepNet||sepString||nextSep;
+            currColNet = currColNet||boxString||belowString;
             );
-        currSepNet
+        
+        currColNet
         );
     
-
     ans := "";
-    for theNet in mingle {sepList,colList} do (
+    for theNet in mingle {sepColumns,boxColumns} do (
         ans = ans|theNet;
         );
     ans^1
     )
 
 -*
-net SkewTableau := T -> (
+DRAWS A TABLOID
+net2 SkewTableau := T -> (
     (lam,mu) := shape0 T;
 
     if #lam == 0 then return "∅";
 
-    muFiller := "░"; --either " " or "■" or "░"
-    
-    colList := for colIndex from 0 to lam#0-1 list (
-        currCol := T_colIndex;
-        currColNet := " ";
-        if all(currCol, theBox -> theBox === null) then (
-            for i from 0 to #currCol-1 do (
-                currColNet = currColNet||muFiller;
-                );
-            ) else (
-            colWidth := max for theBox in currCol list (
-                if theBox === null then (
-                    0
-                    ) else (
-                    #toString(theBox)
-                    )
-                );
-            if colIndex >= mu#0 then (
-                currColNet = concatenate (colWidth:"_");
-                );
-            for rowIndex from 0 to #currCol-1 do (
-                theBox := currCol#rowIndex;
-                if theBox === null then (
-                    if colIndex <= mu#rowIndex and rowIndex < #mu-1 and colIndex >= mu#(rowIndex+1) then (
-                        currColNet = currColNet||(concatenate (colWidth:"_"));
-                        ) else (
-                        currColNet = currColNet||" ";
-                        );
-                    ) else (
-                    currColNet = currColNet||toString(theBox);
-                    );
-                );
-            currColNet = currColNet||(concatenate (colWidth:"¯"));
-            );
-        currColNet
-        );
-    
-    colSepList := for colIndex from 0 to lam#0-1 list (
-        rowNetList := for rowIndex from 0 to #lam-1 list (
-            if colIndex == mu#rowIndex xor colIndex == lam#rowIndex then (
-                "|"
-                ) else (
-                " "
-                )
-            );
-        currCol := "";
-        for theRowNet in rowNetList do (
-            currCol = currCol||theRowNet;
-            );
-        currCol
-        );
-    lastColSep := " ";
-    for i from 0 to #lam-1 do (
-        if lam#i == lam#0 and lam#i > mu#i then (
-            lastColSep = lastColSep||"|";
-            ) else if lam#i == lam#0 and lam#i == mu#i then (
-            lastColSep = lastColSep||" ";
-            ) else (
-            break;
-            );
-        );
-    colSepList = append(colSepList,lastColSep);
-    
+    (muSmallest, lamLargest) := (min toList mu, max toList lam);
+    colWidth := if #entries T == 0 then 1 else max for theBox in entries T list #toString(theBox);
+    colWidth = max {colWidth + 2,3};
 
-    ans := colSepList#0;
-    if mu#-1 > 0 then (
-        ans = "";
+    ans := "";
+    for colIndex from muSmallest to lamLargest do (
+        currCol := if colIndex >= mu#0 and colIndex < lam#0 then concatenate(colWidth:"─") else concatenate(colWidth:" ");
+        for rowIndex from 0 to #lam-1 do (
+            isBox := colIndex >= mu#rowIndex and colIndex < lam#rowIndex;
+            isBoxBelow := rowIndex < #lam-1 and colIndex >= mu#(rowIndex+1) and colIndex < lam#(rowIndex+1);
+            
+            boxString := " ";
+            belowString := " ";
+            if isBox then (
+                boxString = " "|toString((T^rowIndex)#(colIndex-mu#rowIndex))|" ";
+                );
+            if isBox or isBoxBelow then belowString = "─";
+            belowString = concatenate(colWidth:belowString);
+            currCol = currCol||boxString||belowString;
+            );
+        ans = ans|currCol;
+        
+        
         );
-    for i from 0 to #colList-1 do (
-        ans = ans|colList#i|colSepList#(i+1);
-        );
-    ans^1   
+    
+    
+    ans
     )
 *-
 
 tex SkewTableau := T -> (
     -- \usepackage{atableau}
-    (lam,mu) := shape T;
+    (lam,mu) := shape0 T;
     
     ans := "\\SkewTableau[skew border, skew boxes] "|toString(toList mu);
     filling := for i from 0 to #lam-1 list (
@@ -314,9 +296,21 @@ tex SkewTableau := T -> (
 
 entries SkewTableau := T -> T#values
 
-numcols SkewTableau := T -> (T#"outerPartition")#0
+numcols SkewTableau := T -> (
+    (lam,mu) := shape0 T;
+    max(max toList lam - min toList mu,0)
+    )
 
-numrows SkewTableau := T -> #T#"outerPartition"
+numrows SkewTableau := T -> (
+    (lam,mu) := shape0 T;
+    #lam
+    )
+
+colRange = method(TypicalValue => Sequence)
+colRange SkewTableau := T -> (
+    (lam,mu) := shape0 T;
+    ((min toList mu)..(max toList lam - 1))
+    )
 
 size SkewTableau := T -> # entries T
 
@@ -325,6 +319,7 @@ toList SkewTableau := T -> (
     )
 
 conjugate SkewTableau := T -> (
+    if not isYoungTableau T then error "expected inner and outer shapes to be partitions";
     (lam,mu) := shape0 T;
 
     if #lam == 0 then return T;
@@ -338,21 +333,36 @@ conjugate SkewTableau := T -> (
 
 components SkewTableau := T -> (
     (lam,mu) := shape0 T;
+    (lam,mu) = (toList lam,toList mu);
 
-    componentStarts := select(0..(#lam-1),i -> if lam#i == mu#i then (false) else (i == 0 or lam#i <= mu#(i-1)));
-    componentEnds := select(0..(#lam-1),i -> if lam#i == mu#i then (false) else (i == #lam-1 or mu#i >= lam#(i+1)));
+    isConnectedToNextRow := for i from 0 to numrows T - 2 list (
+        if (mu#i <= mu#(i+1) and mu#(i+1) < lam#i and lam#(i+1) > mu#(i+1)) or (mu#(i+1) <= mu#i and mu#i < lam#(i+1) and lam#i > mu#i) then (
+            true
+            ) else (
+            false
+            )
+        );
+    isConnectedToNextRow = append(isConnectedToNextRow,false);
 
-    for i from 0 to #componentStarts-1 list (
-        partIndices := toList((componentStarts#i)..(componentEnds#i));
-        lam' := new Partition from for theIndex in partIndices list (lam#theIndex-mu#(partIndices#-1));
-        mu' := new Partition from for theIndex in partIndices list (mu#theIndex-mu#(partIndices#-1));
+    currComponentStart := 0;
+    compRows := for i from 0 to numrows T - 1 list (
+        if isConnectedToNextRow#i then continue else (
+            compStart := currComponentStart;
+            currComponentStart = i + 1;
+            (compStart..i)
+            )
+        );
+
+    for partIndices in compRows list (
+        lam' := new Partition from lam_(toList partIndices);
+        mu' := new Partition from mu_(toList partIndices);
+        (lam',mu') = shapeReduced(lam',mu');
         entryList' := flatten for theIndex in partIndices list rowEntries(theIndex,T);
-        skewTableau(lam',mu',entryList')
+        if #entryList' == 0 then continue else skewTableau(lam',mu',entryList')
         )
-    
-    --(componentStarts,componentEnds)
     )
 
+-*
 SkewTableau == SkewTableau := (T1,T2) -> (
     if entries T1 != entries T2 then return false;
     
@@ -361,6 +371,7 @@ SkewTableau == SkewTableau := (T1,T2) -> (
 
     return toList lam1 == toList lam2 and toList mu1 == toList mu2;
     )
+*-
 
 rowEntries = method(TypicalValue => List)
 rowEntries (ZZ,SkewTableau) := (rowIndex,T) -> delete(null,T^rowIndex)
@@ -395,7 +406,7 @@ indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
     if theIndex < 0 or theIndex >= size T then error "index out of range";
 
     (lam,mu) := shape0 T;
-
+    
     numBoxesSeen := 0;
     for rowIndex from 0 to numRows T - 1 do (
         for colIndex from mu#rowIndex to lam#rowIndex - 1 do (
@@ -409,11 +420,9 @@ indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
 positionToIndex = method(TypicalValue => ZZ)
 positionToIndex (Sequence,SkewTableau) := (thePosition,T) -> (
     (rowIndex,colIndex) := thePosition;
-    --rowIndex := thePosition#0;
-    --colIndex := thePosition#1;
     (lam,mu) := shape0 T;
 
-    if rowIndex > #lam-1 or colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index out of range";
+    if rowIndex < 0 or rowIndex >= #lam or colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index out of range";
 
     numBoxesSeen := 0;
     for theRowIndex from 0 to numRows T - 1 do (
@@ -508,6 +517,7 @@ allSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     (lamList,muList) := (toList lam, toList mu);
 
     if rsort lamList != lamList or rsort muList != muList then error "expected partitions to be weakly decreasing";
+    --if any(lamList|muList, thePart -> thePart < 0) then error "expected non-negative parts";
 
     lamList = delete(0,lamList);
     muList = delete(0,muList);
@@ -578,8 +588,6 @@ JTtableaux (Partition,Partition,ZZ) := (lam,mu,N) -> (
             toList allSSYT(new Partition from {theIndex},new Partition from {0},N)
             )
         );
-    
-    
     
     permList := permutations (#lam);
     signList := for thePerm in permList list (permutationSign thePerm);

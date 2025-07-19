@@ -83,5 +83,5 @@ components T
 - Get a (bagged) list of all SSYT of a given shape, and given maximum box entry (default $\ell(\lambda) $):
 ```
 allSSYT(lam,mu,#lam+1)
-allSSYT(lam,mu,#lam)
+allSSYT(lam,mu)
 ```

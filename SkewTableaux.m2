@@ -1,28 +1,32 @@
 newPackage(
     "SkewTableaux",
-    Version => "0.3",
-    Date => "July 18, 2025",
+    Version => "0.4",
+    Date => "July 19, 2025",
     Authors => {
 	{Name => "John Graf", Email => "grafjohnr@gmail.com", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",
     Keywords => {"Combinatorics"},
     DebuggingMode => false,
-    PackageImports => {"Permutations"}
+    PackageImports => {"Permutations"}--,
+    --Configuration => {"Convention" => "English", "TexPackage" => "aTableau"}
     )
 
-export {"SkewTableau", "skewTableau",
-        "shape", "shape0", "rowEntries", "colEntries", "colRange", "isSkew", "isYoungTableau",
-        "indexToPosition", "positionToIndex", "alignToZero", "verticalConcatenate", "shift", "unshift",
-        "allSSYT", "JTshapes", "JTtableaux"}
+export {"SkewTableau", "skewTableau", "youngDiagram",
+        "shape", "shapeNormalized", "rowEntries", "colEntries", "colRange", "isSkew", "isYoungTableau",
+        "indexToPosition", "positionToIndex", "verticalConcatenate", "shift", "unshift",
+        "allSSYT", "allRowWeakTableaux", "allJacobiTrudiShapes", "allJacobiTrudiTableaux",
+        "drawInnerShape"}
+
+isDrawnInner := false
+
+drawInnerShape = method(TypicalValue => Nothing)
+drawInnerShape Boolean := theBool -> (isDrawnInner = theBool;)
 
 SkewTableau = new Type of HashTable
 skewTableau = method(TypicalValue => SkewTableau)
-skewTableau (Partition,Partition,List) := (lam,mu,theList)->(
-    maxLength := max {#lam,#mu};
-    lamPadded := new Partition from (toList(lam)|toList((maxLength-#lam):0));
-    muPadded := new Partition from (toList(mu)|toList((maxLength-#mu):0));
-
-    numBoxesNeeded := sum for i from 0 to #lamPadded-1 list max(lamPadded#i-muPadded#i,muPadded#i-lamPadded#i);
+skewTableau (Partition,Partition,List) := (lam,mu,theList) -> (
+    (lam',mu') := shapeNormalized(lam,mu);
+    numBoxesNeeded := sum for i from 0 to #lam'-1 list max(lam'#i-mu'#i,mu'#i-lam'#i);
     
     if (numBoxesNeeded != #theList) then error "partition sizes do not match with the length of the list";
     if any(theList, theElt -> theElt === null) then error "filling must not contain null entries";
@@ -33,11 +37,11 @@ skewTableau (Partition,Partition,List) := (lam,mu,theList)->(
         values => theList
         }
     )
-skewTableau (Partition,List) := (lam,theList)->(
+skewTableau (Partition,List) := (lam,theList) -> (
     skewTableau(lam,new Partition from {},theList)
     )
 skewTableau (Partition,Partition) := (lam,mu) -> (
-    (lam',mu') := shape0(lam,mu);
+    (lam',mu') := shapeNormalized(lam,mu);
     numBoxesNeeded := sum for i from 0 to #lam'-1 list max(lam'#i-mu'#i,mu'#i-lam'#i);
     
     skewTableau(lam,mu,toList(numBoxesNeeded:""))
@@ -45,7 +49,7 @@ skewTableau (Partition,Partition) := (lam,mu) -> (
 skewTableau Partition := lam -> (
     numBoxesNeeded := sum for i from 0 to #lam-1 list max(lam#i,-lam#i);
     
-    skewTableau(lam,new Partition from {},toList (numBoxesNeeded:""))
+    skewTableau(lam, new Partition from {}, toList(numBoxesNeeded:""))
     )
 
 shape = method(TypicalValue => Sequence)
@@ -62,8 +66,8 @@ shape SkewTableau := T -> (
     shape(T#"outerShape", T#"innerShape")
     )
 
-shape0 = method(TypicalValue => Sequence)
-shape0 (Partition,Partition) := (lam,mu) -> (
+shapeNormalized = method(TypicalValue => Sequence)
+shapeNormalized (Partition,Partition) := (lam,mu) -> (
     (lam,mu) = shape(lam,mu);
     maxLength := max(#lam,#mu);
 
@@ -72,29 +76,13 @@ shape0 (Partition,Partition) := (lam,mu) -> (
     
     (new Partition from lamPadded, new Partition from muPadded)
     )
-shape0 SkewTableau := T -> (
-    shape0 shape T
+shapeNormalized SkewTableau := T -> (
+    shapeNormalized shape T
     )
-
--*
-shapeReduced = method(TypicalValue => Sequence)
-shapeReduced (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = shape0(lam,mu);
-    minMu := min toList mu;
-    
-    lamReduced := for thePart in lam list thePart - minMu;
-    muReduced := for thePart in mu list thePart - minMu;
-    
-    (new Partition from lamReduced, new Partition from muReduced)
-    )
-shapeReduced SkewTableau := T -> (
-    shapeReduced shape0 T
-    )
-*-
 
 alignToZero = method(TypicalValue => SkewTableau)
 alignToZero (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = shape0(lam,mu);
+    (lam,mu) = shapeNormalized(lam,mu);
     minPart := min(toList mu | toList lam);
 
     lamAligned := for thePart in lam list thePart - minPart;
@@ -103,20 +91,20 @@ alignToZero (Partition,Partition) := (lam,mu) -> (
     (new Partition from lamAligned, new Partition from muAligned)
     )
 alignToZero SkewTableau := T -> (
-    (lamAligned,muAligned) := alignToZero shape0 T;
+    (lamAligned,muAligned) := alignToZero shapeNormalized T;
     skewTableau(lamAligned, muAligned, entries T)
     )
 
 SkewTableau == SkewTableau := (T1,T2) -> (
-    (lam1,mu1) := shape0 T1;
-    (lam2,mu2) := shape0 T2;
+    (lam1,mu1) := shapeNormalized T1;
+    (lam2,mu2) := shapeNormalized T2;
 
     entries T1 == entries T2 and toList lam1 == toList lam2 and toList mu1 == toList mu2
     )
 
 hasNegativeRow = method(TypicalValue => Boolean)
 hasNegativeRow SkewTableau := T -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
     
     any(0..(#lam-1), i -> mu#i > lam#i)
     )
@@ -125,7 +113,7 @@ normalizeNegativeRows = method(TypicalValue => SkewTableau)
 normalizeNegativeRows SkewTableau := T -> (
     if not hasNegativeRow T then return T;
     
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
 
     lam' := new Partition from for i from 0 to #lam-1 list max(lam#i,mu#i);
     mu' := new Partition from for i from 0 to #lam-1 list min(lam#i,mu#i);
@@ -135,13 +123,13 @@ normalizeNegativeRows SkewTableau := T -> (
 
 listNegativeRows = method(TypicalValue => List)
 listNegativeRows SkewTableau := T -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
 
     for i from 0 to #lam-1 list (mu#i > lam#i)
     )
 
 SkewTableau^ZZ := (T,rowIndex) -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     colInds := colRange T;
 
     if rowIndex < 0 then (
@@ -158,7 +146,7 @@ SkewTableau^ZZ := (T,rowIndex) -> (
     )
 
 SkewTableau_ZZ := (T,colIndex) -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     colInds := colRange T;
 
     if colIndex < colInds#0 or colIndex > colInds#-1 then error "index out of bounds";
@@ -188,14 +176,13 @@ colEntries = method(TypicalValue => List)
 colEntries (ZZ,SkewTableau) := (colIndex,T) -> delete(null,T_colIndex)
 
 net SkewTableau := T -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
 
-    if #lam == 0 then return "∅";
+    if #lam == 0 or (size T == 0 and not isDrawnInner) then return "∅";
 
     isNegativeRow := listNegativeRows T;
 
-    --innerShapeString := if DrawInnerShape then "■" else " ";
-    innerShapeString := "■";
+    innerShapeString := if isDrawnInner then "■" else " ";
 
     (muSmallest, lamLargest) := (min(min toList mu,0), max(max toList lam,0));
     colWidth := if #entries T == 0 then 1 else max for theBox in entries T list #toString(theBox);
@@ -301,10 +288,15 @@ net SkewTableau := T -> (
     ans^1
     )
 
+youngDiagram = method(TypicalValue => Net)
+youngDiagram (Partition,Partition) := (lam,mu) -> net skewTableau(lam,mu)
+youngDiagram Partition := lam -> youngDiagram(lam,new Partition from {0})
+youngDiagram SkewTableau := T -> ((lam,mu) := shapeNormalized T; youngDiagram(lam,mu))
+
 -*
 DRAWS A TABLOID
 net2 SkewTableau := T -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
 
     if #lam == 0 then return "∅";
 
@@ -340,7 +332,7 @@ net2 SkewTableau := T -> (
 
 tex SkewTableau := T -> (
     -- \usepackage{atableau}
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     
     isNegativeRow := listNegativeRows T;
     starString := if hasNegativeRow T then ", star style={fill=red!50}" else "";
@@ -362,32 +354,34 @@ tex SkewTableau := T -> (
 entries SkewTableau := T -> T#values
 
 numcols SkewTableau := T -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     max(max toList lam - min toList mu,0)
     )
 
 numrows SkewTableau := T -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     #lam
     )
 
 colRange = method(TypicalValue => Sequence)
 colRange SkewTableau := T -> (
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     (min (toList mu | toList lam)..(max (toList lam | toList mu) - 1))
     )
 
 size SkewTableau := T -> # entries T
 
+-*
 toList SkewTableau := T -> (
     for i from 0 to #T#"outerPartition"-1 list T^i
     )
+*-
 
 --iterator SkewTableau := T -> iterator entries T
 
 conjugate SkewTableau := T -> (
     if not isYoungTableau T then error "expected inner and outer shapes to be partitions";
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
 
     if #lam == 0 then return T;
     
@@ -400,10 +394,10 @@ conjugate SkewTableau := T -> (
 
 components SkewTableau := T -> (
     --if hasNegativeRow T then error "tableau has row of negative length";
-    (lamOriginal,muOriginal) := shape0 T;
+    (lamOriginal,muOriginal) := shapeNormalized T;
     (lamOriginal,muOriginal) = (toList lamOriginal,toList muOriginal);
     
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     (lam,mu) = (toList lam,toList mu);
 
     isNegativeRow := listNegativeRows T;
@@ -437,8 +431,8 @@ components SkewTableau := T -> (
 
 verticalConcatenate = method(TypicalValue => SkewTableau)
 verticalConcatenate List := tabList -> (
-    lam := new Partition from flatten for T in tabList list toList((shape0 T)#0);
-    mu := new Partition from flatten for T in tabList list toList((shape0 T)#1);
+    lam := new Partition from flatten for T in tabList list toList((shapeNormalized T)#0);
+    mu := new Partition from flatten for T in tabList list toList((shapeNormalized T)#1);
     entryList := flatten for T in tabList list entries T;
 
     skewTableau(lam, mu, entryList)
@@ -449,8 +443,8 @@ SkewTableau || SkewTableau := (T1,T2) -> (
     )
 
 SkewTableau ++ SkewTableau := (T1,T2) -> (
-    (lam1,mu1) := shape0 T1;
-    (lam2,mu2) := shape0 T2;
+    (lam1,mu1) := shapeNormalized T1;
+    (lam2,mu2) := shapeNormalized T2;
     (entryList1, entryList2) := (entries T1, entries T2);
 
     lastMu1 := mu1#-1;
@@ -469,7 +463,7 @@ SkewTableau ++ SkewTableau := (T1,T2) -> (
 
 isYoungTableau = method(TypicalValue => Boolean)
 isYoungTableau SkewTableau := T -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
     (lam,mu) = (toList lam, toList mu);
     
     lam == rsort lam and mu == rsort mu and all(lam|mu, thePart -> thePart >= 0)
@@ -484,7 +478,7 @@ isSkew SkewTableau := T -> (
 
 shift = method(TypicalValue => SkewTableau)
 shift (SkewTableau,ZZ) := (T,firstRowAmount) -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
     
     lam = for i from 0 to #lam-1 list (lam#i+(i+firstRowAmount));
     mu = for i from 0 to #lam-1 list (mu#i+(i+firstRowAmount));
@@ -497,7 +491,7 @@ shift SkewTableau := T -> (
 
 unshift = method(TypicalValue => SkewTableau)
 unshift (SkewTableau,ZZ) := (T,firstRowAmount) -> (
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
     
     lam = for i from 0 to #lam-1 list (lam#i-(i+firstRowAmount));
     mu = for i from 0 to #lam-1 list (mu#i-(i+firstRowAmount));
@@ -520,7 +514,7 @@ indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
         );
     if theIndex < 0 or theIndex >= size T then error "index out of range";
 
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
     
     numBoxesSeen := 0;
     for rowIndex from 0 to numRows T - 1 do (
@@ -534,7 +528,7 @@ indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
 positionToIndex = method(TypicalValue => ZZ)
 positionToIndex (Sequence,SkewTableau) := (thePosition,T) -> (
     (rowIndex,colIndex) := thePosition;
-    (lam,mu) := shape0 normalizeNegativeRows T;
+    (lam,mu) := shapeNormalized normalizeNegativeRows T;
 
     if rowIndex < 0 or rowIndex >= #lam or colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index out of range";
 
@@ -550,7 +544,7 @@ positionToIndex (Sequence,SkewTableau) := (thePosition,T) -> (
 maxSSYT = method(TypicalValue => SkewTableau)
 maxSSYT (Partition,Partition) := (lam,mu) -> (
     tempT := skewTableau(lam,mu);
-    (lam,mu) = shape0 tempT;
+    (lam,mu) = shapeNormalized tempT;
 
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
         (i,j) := indexToPosition(entryIndex,tempT);
@@ -565,7 +559,7 @@ maxSSYT (Partition,Partition) := (lam,mu) -> (
 minSSYT = method(TypicalValue => SkewTableau)
 minSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     tempT := skewTableau(lam,mu);
-    (lam,mu) = shape0 tempT;
+    (lam,mu) = shapeNormalized tempT;
     
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
         (i,j) := indexToPosition(entryIndex,tempT);
@@ -582,7 +576,7 @@ addOneSSYT = method(TypicalValue => SkewTableau)
 addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
     if T_thePosition >= minSSYT_thePosition then return null;
     
-    (lam,mu) := shape0 T;
+    (lam,mu) := shapeNormalized T;
     (rowIndex,colIndex) := thePosition;
 
     if (rowIndex < 0) or (rowIndex >= #lam) then error "index out of range";
@@ -623,7 +617,7 @@ addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
 
 allSSYT = method(TypicalValue => List)
 allSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
-    (lam,mu) = shape0(lam,mu);
+    (lam,mu) = shapeNormalized(lam,mu);
     (lamList,muList) := (toList lam, toList mu);
 
     if rsort lamList != lamList or rsort muList != muList then error "expected partitions to be weakly decreasing";
@@ -638,45 +632,84 @@ allSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
 
     maxT := maxSSYT(lam,mu);
     minT := minSSYT(lam,mu,maxEntry);
-    ans := {maxT};
 
     recurse := (theIndex,T) -> (
         newT := addOneSSYT(T,indexToPosition(theIndex,T),minT);
         
-        if newT =!= null then (
-            ans = append(ans,newT);
-            
-            for i from 1 to -theIndex do (
-                recurse(-i,newT)
-                );
-            );
+        if newT =!= null then flatten ({newT} | for i from 1 to -theIndex list recurse(-i,newT))
         );
 
-    for theIndex from 1 to size T do (
-        recurse(-theIndex,maxT);
-        );
+    --ans := {maxT} | flatten for theIndex from 1 to size T list recurse(-theIndex,maxT);
+    ans := {maxT} | flatten parallelApply(1..(size T), theIndex -> recurse(-theIndex,maxT));
 
-    Bag ans
+    Bag delete(null,ans)
     )
 allSSYT (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = shape0(lam,mu);
+    (lam,mu) = shapeNormalized(lam,mu);
     maxEntry := #lam;
+    
     allSSYT(lam,mu,maxEntry)
     )
 allSSYT (Partition,ZZ) := (lam,maxEntry) -> (
     mu := new Partition from {0};
+    
     allSSYT(lam,mu,maxEntry)
     )
 allSSYT Partition := lam -> (
     mu := new Partition from {0};
-    (lam,mu) = shape0(lam,mu);
+    (lam,mu) = shapeNormalized(lam,mu);
     maxEntry := #lam;
+    
     allSSYT(lam,mu,maxEntry)
     )
 
-JTshapes = method(TypicalValue => List)
-JTshapes (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = shape0(lam,mu);
+allRowWeakTableaux = method(TypicalValue => List)
+allRowWeakTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
+    (lam,mu) = shapeNormalized(lam,mu);
+
+    if any(0..(#lam-1), i -> mu#i > lam#i) then return Bag {};
+
+    rowRST := for i from 0 to #lam-1 list (
+        allSSYT(new Partition from {lam#i}, new Partition from {mu#i}, maxEntry)
+        );
+
+    seqOfRows := toList rowRST#0;
+    for i from 1 to #rowRST-1 do (
+        seqOfRows = seqOfRows ** (toList rowRST#i);
+        );
+    
+    Bag for theSeq in seqOfRows/deepSplice list verticalConcatenate toList sequence theSeq
+    )
+allRowWeakTableaux (Partition,Partition) := (lam,mu) -> (
+    (lam,mu) = shapeNormalized(lam,mu);
+    maxEntry := #lam;
+
+    allRowWeakTableaux(lam,mu,maxEntry)
+    )
+allRowWeakTableaux (Partition,ZZ) := (lam,maxEntry) -> (
+    mu := new Partition from {0};
+
+    allRowWeakTableaux(lam,mu,maxEntry)
+    )
+allRowWeakTableaux Partition := lam -> (
+    mu := new Partition from {0};
+    (lam,mu) = shapeNormalized(lam,mu);
+    maxEntry := #lam;
+    
+    allRowWeakTableaux(lam,mu,maxEntry)
+    )
+allRowWeakTableaux (SkewTableau,ZZ) := (T,maxEntry) -> (
+    (lam,mu) := shapeNormalized T;
+    
+    allRowWeakTableaux(lam,mu,maxEntry)
+    )
+allRowWeakTableaux SkewTableau := T -> (
+    allRowWeakTableaux shapeNormalized T
+    )
+
+allJacobiTrudiShapes = method(TypicalValue => List)
+allJacobiTrudiShapes (Partition,Partition) := (lam,mu) -> (
+    (lam,mu) = shapeNormalized(lam,mu);
     
     rowTableauxTable := new HashTable from for theIndex in unique apply((0,0)..(#lam-1,#lam-1), theInd -> (lam#(theInd#0)+theInd#1+1,mu#(theInd#1)+theInd#0+1)) list (
         (outerLength,innerLength) := theIndex;
@@ -696,49 +729,9 @@ JTshapes (Partition,Partition) := (lam,mu) -> (
         verticalConcatenate for theShape in theProd list skewTableau(new Partition from {theShape#0},new Partition from {theShape#1})
         )
     )
-JTshapes Partition := lam -> JTshapes(lam,new Partition from {})
+allJacobiTrudiShapes Partition := lam -> allJacobiTrudiShapes(lam,new Partition from {})
 
-JTtableaux = method(TypicalValue => List)
-JTtableaux (Partition,Partition,ZZ) := (lam,mu,N) -> (
-    T := skewTableau(lam,mu);
-    (lam,mu) = shape0 T;
-
-    rowTableauxTable := new HashTable from for theIndex in unique apply((0,0)..(#lam-1,#lam-1), theInd -> (lam#(theInd#0)+theInd#1+1,mu#(theInd#1)+theInd#0+1)) list (
-        (outerLength,innerLength) := theIndex;
-        theKey := toString(theIndex);
-        theKey => toList allSSYT(new Partition from {outerLength},new Partition from {innerLength},N)
-        );
-    
-    permList := permutations (#lam);
-    --signList := for thePerm in permList list (permutationSign thePerm);
-    indexProdList := for thePerm in permList list (
-        for i from 0 to #lam-1 list (
-            j := thePerm#i;
-            (lam#i+j+1,mu#j+i+1)
-            )
-        );
-
-    Bag flatten for j from 0 to #permList-1 list (
-        theProd := indexProdList#j;
-        
-        theKey := toString(theProd#0);
-        currProd := rowTableauxTable#theKey;
-        for i from 1 to #theProd-1 do (
-            theKey = toString(theProd#i);
-            currProd = (currProd ** rowTableauxTable#theKey);
-            );
-        currProd = currProd/deepSplice;
-        
-        for tabSeq in currProd list (
-            wt := flatten for theT in tabSeq list entries theT;
-            --wt = toSequence for i from 1 to max wt list number(wt, theNum -> theNum == i);
-            --(wt,permList#j,signList#j,tabSeq)
-            newT := verticalConcatenate toList tabSeq;
-            --(sort entries newT,permList#j,signList#j,newT)
-            newT
-            )
-        )
-    )
-JTtableaux (Partition,Partition) := (lam,mu) -> (
-    JTtableaux(lam,mu,#lam)
-    )
+allJacobiTrudiTableaux = method(TypicalValue => List)
+allJacobiTrudiTableaux (Partition,Partition,ZZ) := (lam,mu,N) -> Bag flatten for theT in allJacobiTrudiShapes(lam,mu) list toList allRowWeakTableaux(theT,N)
+allJacobiTrudiTableaux (Partition,Partition) := (lam,mu) -> allJacobiTrudiTableaux(lam,mu,#lam)
+allJacobiTrudiTableaux Partition := lam -> allJacobiTrudiTableaux(lam,new Partition from {},#lam)

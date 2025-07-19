@@ -12,43 +12,37 @@ mu = new Partition from {3,1}
 entryList = {1,2,3,3,9}
 T = skewTableau(lam,mu,entryList)
 ```
-
-- Get the tableau as a basic net, or as a pretty net:
+- Create a Young diagram by leaving the filling empty:
 ```
-net T
-pretty T
+skewTableau(lam,mu)
 ```
 
-- Check equality (same disconnected components) and strict equality (exactly same shape and filling):
+- Create a skew tableau using compositions, negative parts, and negative row lengths:
 ```
-lam2 = new Partition from {5,4,3}
-mu2 = new Partition from {4,2,1}
-entryList2 = {1,2,3,3,9}
-T2 = skewTableau(lam2,mu2,entryList2)
-T == T2
-T === T2
+lam1 = new Partition from {2,7,3,0,-1,0,2,2,-4}
+mu1 = new Partition from {-3,5,0,-1,-4,0,1,-1,-2}
+entryList1 = toList(1..(sum for i from 0 to #lam1-1 list max(lam1#i-mu1#i,mu1#i-lam1#i)))
+T1 = skewTableau(lam1,mu1,entryList1)
 ```
 
-- Get the shape (sequence $(\lambda,\mu)$) of a tableau, the 'reduced shape' (set difference), or 'shape0' ($0$'s appended to $\mu$ so that $\lambda$ and $\mu$ have the same length):
+- Get the shape (sequence $(\lambda,\mu)$ ) of a tableau, the 'reduced shape' (partitions realigned so that the smallest part of $\mu$ is $0$), or 'shape0' ($0$'s appended so that $\lambda$ and $\mu$ have the same length):
 ```
-shape T
-reducedShape T2
+shape T1
+shapeReduced T1
 shape0 T
 ```
 
 - Get the $i$ th row, $j$ th column, or box $(i,j)$:
 ```
-i = 1
-j = 2
-T^i
-T_j
-T_(i,j)
+T^1
+T_2
+T_(1,2)
 ```
 
 - Get the $i$ th row or $j$ th column, with null entries removed:
 ```
-rowEntries(i,T)
-colEntries(j,T)
+rowEntries(1,T)
+colEntries(2,T)
 ```
 
 - Get the filling, number of rows, number of columns, and number of boxes:

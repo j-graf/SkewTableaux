@@ -30,6 +30,11 @@ drawInnerShape false
 net T
 ```
 
+- Get the net of the Ferrers diagram of a given shape:
+```
+ferrersDiagram T
+```
+
 - Create a skew tableau using compositions, negative parts, and negative row lengths:
 ```
 lam' = new Partition from {1,5,0,-1}

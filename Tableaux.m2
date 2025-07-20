@@ -1,5 +1,5 @@
 newPackage(
-    "SkewTableaux",
+    "Tableaux",
     Version => "0.4",
     Date => "July 19, 2025",
     Authors => {

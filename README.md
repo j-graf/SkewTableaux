@@ -5,34 +5,47 @@ Macaulay2 package (work-in-progress) for dealing with skew tableaux.
 
 ## Skew tableau basics
 
-- Create a skew tableau of shape $\lambda/\mu$, where $\lambda=(3,2,2)$, $\mu=(2)$, and with the given filling:
+- Create a skew tableau of shape $\lambda/\mu$, where $\lambda=(4,3,2)$, $\mu=(3,1)$, and with the given filling:
 ```
 lam = new Partition from {4,3,2}
 mu = new Partition from {3,1}
 entryList = {1,2,3,3,9}
 T = skewTableau(lam,mu,entryList)
 ```
-- Create a Young diagram by leaving the filling empty:
+
+- If the filling is ommitted, empty strings are used for each box instead. If a second partition is ommitted, then the $0$ partition is used as the inner shape:
 ```
 skewTableau(lam,mu)
+skewTableau(lam)
+```
+
+- Get the net of the Young diagram of a given shape, or the net of the tableau itself. The inner shape can also be drawn by calling drawInnerShape true:
+```
+youngDiagram T
+youngDiagram(lam,mu)
+net T
+drawInnerShape true
+net T
+drawInnerShape false
+net T
 ```
 
 - Create a skew tableau using compositions, negative parts, and negative row lengths:
 ```
-lam1 = new Partition from {2,7,3,0,-1,0,2,2,-4}
-mu1 = new Partition from {-3,5,0,-1,-4,0,1,-1,-2}
-entryList1 = toList(1..(sum for i from 0 to #lam1-1 list max(lam1#i-mu1#i,mu1#i-lam1#i)))
-T1 = skewTableau(lam1,mu1,entryList1)
+lam' = new Partition from {1,5,0,-1}
+mu' = new Partition from {-2,2,0,2}
+entryList' = toList(1..(sum for i from 0 to #lam'-1 list abs(lam'#i-mu'#i)))
+T' = skewTableau(lam',mu',entryList')
 ```
 
-- Get the shape (sequence $(\lambda,\mu)$ ) of a tableau, the 'reduced shape' (partitions realigned so that the smallest part of $\mu$ is $0$), or 'shape0' ($0$'s appended so that $\lambda$ and $\mu$ have the same length):
+- Get the shape (sequence $(\lambda,\mu)$ ) of a tableau, or 'padded shape' ($0$'s appended so that $\lambda$ and $\mu$ have the same length). Supports multiple assignment:
 ```
-shape T1
-shapeReduced T1
-shape0 T
+shape T'
+shapePadded T
+(lam'',mu'') = shapePadded T
 ```
 
-- Get the $i$ th row, $j$ th column, or box $(i,j)$:
+- Get the $i$ th row, $j$ th column, or box $(i,j)$. Note that row T^i and column T_j will have null entries in positions without boxes, so that when T has only nonnegative parts, we have (T^i)\_j == T\_(i,j):
 ```
 T^1
 T_2
@@ -51,6 +64,21 @@ entries T
 numrows T
 numcols T
 size T
+```
+
+- Rows are indexed by 0..(#lam-1), and columns are indexed over colRange T:
+```
+for i from 0 to #lam'-1 do print (T'^i)
+print colRange T'
+for j in colRange T do print (T'_j)
+```
+
+## Useful Methods
+
+- Get LaTeX code for a given tableau, using the LaTeX package 'aTableau':
+```
+tex T
+tex T'
 ```
 
 - Conjugate a tableau:
@@ -73,9 +101,46 @@ indexToPosition(3,T)
 positionToIndex((2,0),T)
 ```
 
+- Iterate over the box entries, or over the box positions:
+```
+for theBox in entries T do print theBox
+for theIndex from 0 to size T - 1 do print indexToPosition(theIndex,T)
+```
+
 - Get a list of a tableau's connected components:
 ```
-components T
+theComponents = components T
+components T'
+```
+
+- Concatenate two tableaux, or all of the tableaux in a list:
+```
+T || T'
+verticalConcatenate theComponents
+```
+
+- Take the direct sum of two tableaux, or all of the tableaux in a list:
+```
+T ++ T'
+theComponents#0 ++ theComponents#1
+```
+
+- Check if a tableau's shape has weakly decreasing, nonnegative parts:
+```
+isYoungTableau T
+isYoungTableau T'
+```
+
+- Check if the inner shape is the $0$ partition:
+```
+isSkew T
+```
+
+- Shift a tableau, or unshift a tableau:
+```
+shift T
+shift(T,5)
+unshift shift T == T
 ```
 
 ## Algorithms
@@ -84,4 +149,21 @@ components T
 ```
 allSSYT(lam,mu,#lam+1)
 allSSYT(lam,mu)
+```
+
+- Get a (bagged) list of a tableaux with weakly increasing rows of a given shape, and given maximum box entry (default $\ell(\lambda) $):
+```
+allRowWeakTableaux(lam,mu)
+```
+
+- Get a list of all tableau shapes arising from the Jacobi-Trudi identity:
+```
+allJacobiTrudiShapes(lam,mu)
+allJacobiTrudiShapes(lam',mu')
+```
+
+- Get a (bagged) list of all tableax arising from the Jacobi-Trudi identity:
+```
+allJacobiTrudiTableaux(lam,mu)
+allJacobiTrudiTableaux(lam',mu')
 ```

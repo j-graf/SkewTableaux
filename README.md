@@ -75,7 +75,7 @@ for j in colRange T do print (T'_j)
 
 ## Useful Methods
 
-- Get LaTeX code for a given tableau, using the LaTeX package 'aTableau':
+- Get LaTeX code for a given tableau, using the LaTeX package [aTableau](https://github.com/AndrewMathas/aTableau):
 ```
 tex T
 tex T'

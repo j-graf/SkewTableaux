@@ -1,5 +1,5 @@
-# SkewTableaux
-Macaulay2 package (work-in-progress) for dealing with skew tableaux.
+# Tableaux
+Macaulay2 package (work-in-progress) for dealing with (skew) Young tableaux.
 
 # Examples
 

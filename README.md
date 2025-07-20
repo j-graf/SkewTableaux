@@ -43,11 +43,11 @@ entryList' = toList(1..(sum for i from 0 to #lam'-1 list abs(lam'#i-mu'#i)))
 T' = skewTableau(lam',mu',entryList')
 ```
 
-- Get the shape (sequence $(\lambda,\mu)$ ) of a tableau, or 'padded shape' ($0$'s appended so that $\lambda$ and $\mu$ have the same length). Supports multiple assignment:
+- Get the skew shape (sequence $(\lambda,\mu)$ ) of a tableau, or 'padded skew shape' ($0$'s appended so that $\lambda$ and $\mu$ have the same length). Supports multiple assignment:
 ```
-shape T'
-shapePadded T
-(lam'',mu'') = shapePadded T
+skewShape T'
+skewShapePadded T
+(lam'',mu'') = skewShapePadded T
 ```
 
 - Get the $i$ th row, $j$ th column, or box $(i,j)$. Note that row T^i and column T_j will have null entries in positions without boxes, so that when T has only nonnegative parts, we have (T^i)\_j == T\_(i,j):

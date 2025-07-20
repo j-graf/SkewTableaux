@@ -19,7 +19,7 @@ skewTableau(lam,mu)
 skewTableau(lam)
 ```
 
-- Get the net of the Young diagram of a given shape, or the net of the tableau itself. The inner shape can also be drawn by calling drawInnerShape true:
+- Get the net of the Young diagram of a given shape, or the net of the tableau itself. The inner shape can also be drawn by calling `drawInnerShape true`:
 ```
 youngDiagram T
 youngDiagram(lam,mu)

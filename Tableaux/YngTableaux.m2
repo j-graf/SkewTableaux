@@ -26,6 +26,12 @@ yngTableau Partition := lam -> (
 skewTableau YngTableau := T -> new SkewTableau from T
 
 shape = method(TypicalValue => Partition)
+shape Partition := lam -> (
+    numTrailingZeros := # for i from 1 to #lam list (if lam#-i == 0 then 1 else break);
+    lamShortened := (toList lam)_(toList(0..(#lam-1-numTrailingZeros)));
+
+    new Partition from lamShortened
+    )
 shape YngTableau := T -> (
     (lam,mu) := skewShape T;
 

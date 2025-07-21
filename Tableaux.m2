@@ -3,7 +3,7 @@ newPackage(
     Version => "0.4",
     Date => "July 19, 2025",
     Authors => {
-	{Name => "John Graf", Email => "grafjohnr@gmail.com", HomePage => "https://j-graf.github.io/"}},
+	{Name => "John Graf", Email => "jrgraf@alumni.ncsu.edu", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",
     Keywords => {"Combinatorics"},
     AuxiliaryFiles => true,
@@ -12,14 +12,20 @@ newPackage(
     --Configuration => {"Convention" => "English", "TexPackage" => "aTableau"}
     )
 
-export {"SkewTableau", "skewTableau", "youngDiagram", "ferrersDiagram",
-        "skewShape", "skewShapePadded", "rowEntries", "colEntries", "colRange", "isSkew", "isYoungTableau",
-        "indexToPosition", "positionToIndex", "verticalConcatenate", "shift", "unshift", "drawInnerShape"}
+export {"SkewTableau", "skewTableau",
+        "youngDiagram", "ferrersDiagram", "drawInnerShape",
+        "skewShape", "skewShapePadded", "rowEntries", "colEntries", "colRange", "applyEntries", "applyPositions",
+        "isSkew", "isWeaklyDecreasingShape", "isNonnegativeShape",
+        "indexToPosition", "positionToIndex", "positionList",
+        "verticalConcatenate", "shift", "unshift", "boxContent", "hookLength",
+        "standardize"
+        }
 
 export {"YngTableau", "yngTableau",
         "shape"}
 
-export {"allSSYT", "allRowWeakTableaux", "allJacobiTrudiShapes", "allJacobiTrudiTableaux"}
+export {"allSemistandardTableaux", "allRowWeakTableaux", "allJacobiTrudiDiagrams", "allJacobiTrudiTableaux",
+        "numSemistandardTableaux"}
 
 
     
@@ -49,7 +55,11 @@ load "Tableaux/algorithms.m2"
 
 -- TODO: Documentation
 
--- load "Tableaux/documentation.m2"
+beginDocumentation()
+
+load "Tableaux/documentation.m2"
+
+end--
 
 
 

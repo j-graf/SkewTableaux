@@ -1,7 +1,7 @@
 newPackage(
     "Tableaux",
-    Version => "0.5",
-    Date => "July 21, 2025",
+    Version => "1.0",
+    Date => "July 22, 2025",
     Authors => {
 	{Name => "John Graf", Email => "jrgraf@alumni.ncsu.edu", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",

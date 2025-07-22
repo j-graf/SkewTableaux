@@ -4,12 +4,12 @@ YngTableau = new Type of SkewTableau
 
 yngTableau = method(TypicalValue => YngTableau)
 yngTableau (Partition,List) := (lam,theList) -> (
-    mu := new Partition from {};
-    (lam',mu') := pad (lam,mu);
-    numBoxesNeeded := sum for i from 0 to #lam'-1 list max(lam'#i-mu'#i,mu'#i-lam'#i);
+    numBoxesNeeded := sum for i from 0 to #lam-1 list abs(lam#i);
     
     if (numBoxesNeeded != #theList) then error "partition sizes do not match with the length of the list";
     if any(theList, theElt -> theElt === null) then error "filling must not contain null entries";
+
+    mu := new Partition from {};
 
     new YngTableau from {
         "outerShape" => lam,
@@ -18,7 +18,7 @@ yngTableau (Partition,List) := (lam,theList) -> (
         }
     )
 yngTableau Partition := lam -> (
-    numBoxesNeeded := sum for i from 0 to #lam-1 list max(lam#i,-lam#i);
+    numBoxesNeeded := sum for i from 0 to #lam-1 list abs(lam#i);
     
     yngTableau(lam, toList(numBoxesNeeded:""))
     )

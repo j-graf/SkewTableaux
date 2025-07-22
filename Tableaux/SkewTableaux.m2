@@ -36,11 +36,34 @@ skewTableau Partition := lam -> (
     skewTableau(lam, new Partition from {}, toList(numBoxesNeeded:""))
     )
 
-
 skewShape = method(TypicalValue => Sequence)
 skewShape SkewTableau := T -> (
     (T#"outerShape", T#"innerShape")
     )
+
+truncate (Partition,Partition) := theInput -> (
+    (lam,mu) := theInput#1;
+
+    lamNumTrailingZeros := # for i from 1 to #lam list (if lam#-i == 0 then 1 else break);
+    muNumTrailingZeros := # for i from 1 to #mu list (if mu#-i == 0 then 1 else break);
+
+    lamShortened := (toList lam)_(toList(0..(#lam-1-lamNumTrailingZeros)));
+    muShortened := (toList mu)_(toList(0..(#mu-1-muNumTrailingZeros)));
+
+    (new Partition from lamShortened, new Partition from muShortened)
+    )
+
+pad (Partition,Partition) := (lam,mu) -> (
+    maxLength := max(#lam,#mu);
+
+    lamPadded := toList(lam)|toList((maxLength - #lam):0);
+    muPadded := toList(mu)|toList((maxLength - #mu):0);
+    
+    (new Partition from lamPadded, new Partition from muPadded)
+    )
+
+standardize = method(TypicalValue => Sequence)
+standardize (Partition,Partition) := (lam,mu) -> pad truncate (lam,mu)
 
 alignToZero = method(TypicalValue => SkewTableau)
 alignToZero (Partition,Partition) := (lam,mu) -> (
@@ -57,16 +80,6 @@ alignToZero SkewTableau := T -> (
     skewTableau(lamAligned, muAligned, entries T)
     )
 
--*
-SkewTableau == SkewTableau := (T1,T2) -> (
-    T1 === T2
-    --(lam1,mu1) := (T1#"outerShape",T2#"outerShape");
-    --(lam2,mu2) := (T1#"innerShape",T2#"innerShape");
-
-    --entries T1 == entries T2 and toList lam1 == toList lam2 and toList mu1 == toList mu2
-    )
-*-
-
 hasNegativeRow = method(TypicalValue => Boolean)
 hasNegativeRow SkewTableau := T -> (
     (lam,mu) := standardize skewShape T;
@@ -74,6 +87,7 @@ hasNegativeRow SkewTableau := T -> (
     any(0..(#lam-1), i -> mu#i > lam#i)
     )
 
+-- swap parts when mu#i > lam#i
 normalizeNegativeRows = method(TypicalValue => SkewTableau)
 normalizeNegativeRows SkewTableau := T -> (
     if not hasNegativeRow T then return T;
@@ -94,6 +108,16 @@ listNegativeRows SkewTableau := T -> (
     )
 
 -- retrieving rows and columns
+
+numcols SkewTableau := T -> (
+    (lam,mu) := standardize skewShape normalizeNegativeRows T;
+    max(max toList lam - min toList mu,0)
+    )
+
+numrows SkewTableau := T -> (
+    (lam,mu) := standardize skewShape normalizeNegativeRows T;
+    #lam
+    )
 
 columnRange = method(TypicalValue => Sequence)
 columnRange SkewTableau := T -> (
@@ -167,6 +191,47 @@ SkewTableau_ZZ := (T,colIndex) -> (
 columnEntries = method(TypicalValue => List)
 columnEntries (ZZ,SkewTableau) := (colIndex,T) -> delete(null,T_colIndex)
 columnEntries (SkewTableau,ZZ) := (T,colIndex) -> columnEntries(colIndex,T)
+
+toPosition = method(TypicalValue => Sequence)
+toPosition (ZZ,SkewTableau) := (theIndex,T) -> (
+    if theIndex < 0 then (
+        theIndex = size T + theIndex;
+        );
+    if theIndex < 0 or theIndex >= size T then error "index out of range";
+
+    (lam,mu) := standardize skewShape normalizeNegativeRows T;
+    
+    numBoxesSeen := 0;
+    for rowIndex from 0 to numRows T - 1 do (
+        for colIndex from mu#rowIndex to lam#rowIndex - 1 do (
+            if numBoxesSeen == theIndex then return (rowIndex,colIndex);
+            numBoxesSeen = numBoxesSeen + 1;
+            );
+        );
+    )
+toPosition (SkewTableau,ZZ) := (T,theIndex) -> toPosition(theIndex,T)
+
+toIndex = method(TypicalValue => ZZ)
+toIndex (Sequence,SkewTableau) := (thePosition,T) -> (
+    (rowIndex,colIndex) := thePosition;
+    (lam,mu) := standardize skewShape normalizeNegativeRows T;
+
+    if rowIndex < 0 or rowIndex >= #lam or colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index out of range";
+
+    numBoxesSeen := 0;
+    for theRowIndex from 0 to numRows T - 1 do (
+        for theColIndex from mu#theRowIndex to lam#theRowIndex - 1 do (
+            if (theRowIndex,theColIndex) == (rowIndex,colIndex) then return numBoxesSeen;
+            numBoxesSeen = numBoxesSeen + 1;
+            );
+        );
+    )
+toIndex (SkewTableau,Sequence) := (T,thePosition) -> toIndex(thePosition,T)
+
+positionList = method(TypicalValue => List)
+positionList SkewTableau := T -> (
+    for i from 0 to size T - 1 list toPosition(i,T)
+    )
 
 -- drawing
 
@@ -336,7 +401,7 @@ ferrersDiagram (Partition,Partition) := (lam,mu) -> (
 ferrersDiagram Partition := lam -> ferrersDiagram(lam,new Partition from {0})
 ferrersDiagram SkewTableau := T -> ferrersDiagram standardize skewShape T
 
-
+-- getting data
 
 tex SkewTableau := T -> (
     -- \usepackage{atableau}
@@ -361,38 +426,7 @@ tex SkewTableau := T -> (
 
 entries SkewTableau := T -> T#values
 
-numcols SkewTableau := T -> (
-    (lam,mu) := standardize skewShape normalizeNegativeRows T;
-    max(max toList lam - min toList mu,0)
-    )
-
-numrows SkewTableau := T -> (
-    (lam,mu) := standardize skewShape normalizeNegativeRows T;
-    #lam
-    )
-
 size SkewTableau := T -> # entries T
-
--*
-toList SkewTableau := T -> (
-    for i from 0 to #T#"outerPartition"-1 list T^i
-    )
-*-
-
---iterator SkewTableau := T -> iterator entries T
-
-conjugate SkewTableau := T -> (
-    if not isWeaklyDecreasing T or not isNonnegative T then error "expected shape to be weakly decreasing and nonnegative";
-    (lam,mu) := standardize skewShape T;
-
-    if #lam == 0 then return T;
-    
-    lam' := conjugate lam;
-    mu' := conjugate mu;
-    entryList' := flatten for colIndex from 0 to lam#0-1 list columnEntries(colIndex,T);
-
-    skewTableau(lam',mu',entryList')
-    )
 
 components SkewTableau := T -> (
     (lamOriginal,muOriginal) := standardize skewShape T;
@@ -430,6 +464,27 @@ components SkewTableau := T -> (
         )
     )
 
+-- making new tableau
+
+applyEntries = method(TypicalValue => SkewTableau)
+applyEntries (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(entries T, theBox -> f theBox))
+
+applyPositions = method(TypicalValue => SkewTableau)
+applyPositions (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(positionList T, thePosition -> f thePosition))
+
+conjugate SkewTableau := T -> (
+    if not isWeaklyDecreasing T or not isNonnegative T then error "expected shape to be weakly decreasing and nonnegative";
+    (lam,mu) := standardize skewShape T;
+
+    if #lam == 0 then return T;
+    
+    lam' := conjugate lam;
+    mu' := conjugate mu;
+    entryList' := flatten for colIndex from 0 to lam#0-1 list columnEntries(colIndex,T);
+
+    skewTableau(lam',mu',entryList')
+    )
+
 verticalConcatenate = method(TypicalValue => SkewTableau)
 verticalConcatenate List := tabList -> (
     lam := new Partition from flatten for T in tabList list toList((standardize skewShape T)#0);
@@ -462,34 +517,6 @@ SkewTableau ++ SkewTableau := (T1,T2) -> (
     skewTableau(lam, mu, entryList)
     )
 
--*
-isYoungTableau = method(TypicalValue => Boolean)
-isYoungTableau SkewTableau := T -> (
-    isWeaklyDecreasingShape T and isNonnegativeShape T
-    --(lam,mu) := standardize skewShape T;
-    --(lam,mu) = (toList lam, toList mu);
-    
-    --lam == rsort lam and mu == rsort mu and all(lam|mu, thePart -> thePart >= 0)
-    )
-*-
-
-isWeaklyDecreasing = method(TypicalValue => Boolean)
-isWeaklyDecreasing Partition := lam -> rsort toList lam == toList lam
-isWeaklyDecreasing (Partition,Partition) := (lam,mu) -> isWeaklyDecreasing lam and isWeaklyDecreasing mu
-isWeaklyDecreasing SkewTableau := T -> isWeaklyDecreasing skewShape T
-
-isNonnegative = method(TypicalValue => Boolean)
-isNonnegative Partition := lam -> all(toList lam, thePart -> thePart >= 0)
-isNonnegative (Partition,Partition) := (lam,mu) -> isNonnegative lam and isNonnegative mu
-isNonnegative SkewTableau := T -> isNonnegative standardize skewShape T
-
-isSkew = method(TypicalValue => Boolean)
-isSkew SkewTableau := T -> (
-    (lam,mu) := truncate skewShape T;
-
-    #mu != 0
-    )
-
 shift = method(TypicalValue => SkewTableau)
 shift (SkewTableau,ZZ) := (T,firstRowAmount) -> (
     (lam,mu) := standardize skewShape T;
@@ -516,53 +543,26 @@ unshift SkewTableau := T -> (
     unshift(T,0)
     )
 
--*
-weight = method(TypicalValue => Sequence)
-weight SkewTableau := T -> (
-    toSequence for i from 1 to max entries T list number(entries T, theBox -> theBox == i)
+-- bools
+
+isWeaklyDecreasing = method(TypicalValue => Boolean)
+isWeaklyDecreasing Partition := lam -> rsort toList lam == toList lam
+isWeaklyDecreasing (Partition,Partition) := (lam,mu) -> isWeaklyDecreasing lam and isWeaklyDecreasing mu
+isWeaklyDecreasing SkewTableau := T -> isWeaklyDecreasing skewShape T
+
+isNonnegative = method(TypicalValue => Boolean)
+isNonnegative Partition := lam -> all(toList lam, thePart -> thePart >= 0)
+isNonnegative (Partition,Partition) := (lam,mu) -> isNonnegative lam and isNonnegative mu
+isNonnegative SkewTableau := T -> isNonnegative standardize skewShape T
+
+isSkew = method(TypicalValue => Boolean)
+isSkew SkewTableau := T -> (
+    (lam,mu) := truncate skewShape T;
+
+    #mu != 0
     )
-*-
 
-toPosition = method(TypicalValue => Sequence)
-toPosition (ZZ,SkewTableau) := (theIndex,T) -> (
-    if theIndex < 0 then (
-        theIndex = size T + theIndex;
-        );
-    if theIndex < 0 or theIndex >= size T then error "index out of range";
-
-    (lam,mu) := standardize skewShape normalizeNegativeRows T;
-    
-    numBoxesSeen := 0;
-    for rowIndex from 0 to numRows T - 1 do (
-        for colIndex from mu#rowIndex to lam#rowIndex - 1 do (
-            if numBoxesSeen == theIndex then return (rowIndex,colIndex);
-            numBoxesSeen = numBoxesSeen + 1;
-            );
-        );
-    )
-toPosition (SkewTableau,ZZ) := (T,theIndex) -> toPosition(theIndex,T)
-
-toIndex = method(TypicalValue => ZZ)
-toIndex (Sequence,SkewTableau) := (thePosition,T) -> (
-    (rowIndex,colIndex) := thePosition;
-    (lam,mu) := standardize skewShape normalizeNegativeRows T;
-
-    if rowIndex < 0 or rowIndex >= #lam or colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index out of range";
-
-    numBoxesSeen := 0;
-    for theRowIndex from 0 to numRows T - 1 do (
-        for theColIndex from mu#theRowIndex to lam#theRowIndex - 1 do (
-            if (theRowIndex,theColIndex) == (rowIndex,colIndex) then return numBoxesSeen;
-            numBoxesSeen = numBoxesSeen + 1;
-            );
-        );
-    )
-toIndex (SkewTableau,Sequence) := (T,thePosition) -> toIndex(thePosition,T)
-
-positionList = method(TypicalValue => List)
-positionList SkewTableau := T -> (
-    for i from 0 to size T - 1 list toPosition(i,T)
-    )
+-- tableau calculations
 
 boxContent = method(TypicalValue => ZZ)
 boxContent (ZZ,ZZ) := (rowIndex,colIndex) -> colIndex - rowIndex
@@ -576,39 +576,3 @@ hookLength (Sequence,SkewTableau) := (thePosition,T) -> (
     1 + (lam#rowIndex - colIndex - 1) + (lam'#colIndex-rowIndex - 1)
     )
 
-applyEntries = method(TypicalValue => SkewTableau)
-applyEntries (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(entries T, theBox -> f theBox))
-
-applyPositions = method(TypicalValue => SkewTableau)
-applyPositions (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(positionList T, thePosition -> f thePosition))
-
--*
-SkewTableau / Function := (T,f) -> (
-    skewTableau(truncate skewShape T, apply(positionList T, thePosition -> f thePosition))
-    )
-*-
-
-
-truncate (Partition,Partition) := theInput -> (
-    (lam,mu) := theInput#1;
-
-    lamNumTrailingZeros := # for i from 1 to #lam list (if lam#-i == 0 then 1 else break);
-    muNumTrailingZeros := # for i from 1 to #mu list (if mu#-i == 0 then 1 else break);
-
-    lamShortened := (toList lam)_(toList(0..(#lam-1-lamNumTrailingZeros)));
-    muShortened := (toList mu)_(toList(0..(#mu-1-muNumTrailingZeros)));
-
-    (new Partition from lamShortened, new Partition from muShortened)
-    )
-
-pad (Partition,Partition) := (lam,mu) -> (
-    maxLength := max(#lam,#mu);
-
-    lamPadded := toList(lam)|toList((maxLength - #lam):0);
-    muPadded := toList(mu)|toList((maxLength - #mu):0);
-    
-    (new Partition from lamPadded, new Partition from muPadded)
-    )
-
-standardize = method(TypicalValue => Sequence)
-standardize (Partition,Partition) := (lam,mu) -> pad truncate (lam,mu)

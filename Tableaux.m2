@@ -14,11 +14,11 @@ newPackage(
 
 export {"SkewTableau", "skewTableau",
         "youngDiagram", "ferrersDiagram", "drawInnerShape",
-        "skewShape", "rowEntries", "colEntries", "colRange", "applyEntries", "applyPositions",
+        "skewShape", "standardize", "rowEntries", "columnEntries", "rowRange", "columnRange",
         "isSkew", "isWeaklyDecreasing", "isNonnegative",
-        "indexToPosition", "positionToIndex", "positionList",
-        "verticalConcatenate", "shift", "unshift", "boxContent", "hookLength",
-        "standardize"
+        "toPosition", "toIndex", "positionList", "applyEntries", "applyPositions",
+        "verticalConcatenate", "shift", "unshift",
+        "boxContent", "hookLength",
         }
 
 export {"YngTableau", "yngTableau",
@@ -52,16 +52,18 @@ load "Tableaux/algorithms.m2"
 
 
 
--- TODO: Documentation
+-- Documentation
 
 beginDocumentation()
 
 load "Tableaux/documentation.m2"
 
+
+
+-- Tests
+
+load "Tableaux/tests.m2"
+
+
+
 end--
-
-
-
--- TODO: Tests
-
--- load "Tableaux/tests.m2"

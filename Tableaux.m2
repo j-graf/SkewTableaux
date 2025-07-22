@@ -1,7 +1,7 @@
 newPackage(
     "Tableaux",
-    Version => "0.4",
-    Date => "July 19, 2025",
+    Version => "0.5",
+    Date => "July 21, 2025",
     Authors => {
 	{Name => "John Graf", Email => "jrgraf@alumni.ncsu.edu", HomePage => "https://j-graf.github.io/"}},
     Headline => "a package for constructing skew tableaux",
@@ -14,8 +14,8 @@ newPackage(
 
 export {"SkewTableau", "skewTableau",
         "youngDiagram", "ferrersDiagram", "drawInnerShape",
-        "skewShape", "skewShapePadded", "rowEntries", "colEntries", "colRange", "applyEntries", "applyPositions",
-        "isSkew", "isWeaklyDecreasingShape", "isNonnegativeShape",
+        "skewShape", "rowEntries", "colEntries", "colRange", "applyEntries", "applyPositions",
+        "isSkew", "isWeaklyDecreasing", "isNonnegative",
         "indexToPosition", "positionToIndex", "positionList",
         "verticalConcatenate", "shift", "unshift", "boxContent", "hookLength",
         "standardize"
@@ -24,8 +24,7 @@ export {"SkewTableau", "skewTableau",
 export {"YngTableau", "yngTableau",
         "shape"}
 
-export {"allSemistandardTableaux", "allRowWeakTableaux", "allJacobiTrudiDiagrams", "allJacobiTrudiTableaux",
-        "numSemistandardTableaux"}
+export {"allSemistandardTableaux", "numSemistandardTableaux"}
 
 
     

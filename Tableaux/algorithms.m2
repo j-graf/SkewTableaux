@@ -6,7 +6,7 @@ maxSSYT (Partition,Partition) := (lam,mu) -> (
     (lam,mu) = standardize skewShape tempT;
 
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
-        (i,j) := indexToPosition(entryIndex,tempT);
+        (i,j) := toPosition(entryIndex,tempT);
         theCol := tempT_j;
         theColAbove := theCol_(toList(0..i));
         #(delete(null,theColAbove))
@@ -21,7 +21,7 @@ minSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     (lam,mu) = standardize skewShape tempT;
     
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
-        (i,j) := indexToPosition(entryIndex,tempT);
+        (i,j) := toPosition(entryIndex,tempT);
         theCol := tempT_j;
         theColBelow := theCol_(toList((i+1)..(#theCol-1)));
         maxEntry - #(delete(null,theColBelow))
@@ -45,13 +45,13 @@ addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
     maxRowIndex :=  max select(rowIndex..(#lam-1), i -> lam#i > colIndex and mu#i <= colIndex);
     for currRowIndex from rowIndex to maxRowIndex do (
         for currColIndex from colIndex to lam#currRowIndex-1 do (
-            theIndex := positionToIndex((currRowIndex,currColIndex),T);
+            theIndex := toIndex((currRowIndex,currColIndex),T);
             
             currBox := entryList#theIndex;
             
             isBoxLeft := currColIndex > mu#currRowIndex;
             leftBox := if isBoxLeft then (
-                leftIndex := positionToIndex((currRowIndex,currColIndex-1),T);
+                leftIndex := toIndex((currRowIndex,currColIndex-1),T);
                 entryList#leftIndex
                 ) else (
                 0
@@ -59,7 +59,7 @@ addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
             
             isBoxAbove := currRowIndex >= 1 and currColIndex >= mu#(currRowIndex-1) and currColIndex < lam#(currRowIndex-1);
             aboveBox := if isBoxAbove then (
-                aboveIndex := positionToIndex((currRowIndex-1,currColIndex),T);
+                aboveIndex := toIndex((currRowIndex-1,currColIndex),T);
                 entryList#aboveIndex
                 ) else (
                 0
@@ -86,7 +86,7 @@ allSemistandardTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     T := skewTableau(lam,mu);
 
     if #lam == 0 then return Bag {skewTableau(new Partition from {})};
-    if any(colRange T,i -> #colEntries(i,T) > maxEntry) then return Bag {};
+    if any(columnRange T,i -> #columnEntries(i,T) > maxEntry) then return Bag {};
 
     maxT := maxSSYT(lam,mu);
     minT := minSSYT(lam,mu,maxEntry);
@@ -94,7 +94,7 @@ allSemistandardTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     recurse := (anIndex,T) -> (
         canAddOneSSYT := (entries T)#anIndex < (entries minT)#anIndex;
         if canAddOneSSYT then (
-            newT := addOneSSYT(T,indexToPosition(anIndex,T),minT);
+            newT := addOneSSYT(T,toPosition(anIndex,T),minT);
 
             flatten ({newT} | for i from 1 to -anIndex list recurse(-i,newT))
             ) else (

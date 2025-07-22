@@ -7,7 +7,7 @@ Node
     a package for computing with Young tableaux
   Description
     Text
-      This package provides the classes SkewTableau and YngTableau.
+      This package provides the classes @TO SkewTableau@ and @TO YngTableau@.
 ///
 
 doc ///
@@ -18,8 +18,8 @@ Headline
     a type of HashTable representing a skew Young tableau
 Description
   Text
-    An object of type SkewTableau is a hash table containing two shapes of type @TO2{Partition,"Partition"}@,
-    and a list of box entries. The entries may have any type, except for @TO2{null,"null"}@ objects.
+    An object of type SkewTableau is a hash table containing two shapes of type @TO Partition@,
+    and a list of box entries. The entries may have any type, except for @TO null@ objects.
 
     The inner and outer shapes, $\lambda$ and $\mu$ respectively, can be any sequence of integers. In particular,
     it accepts negative parts, compositions, rows where $\lambda_i < \mu_i$, and compositions where
@@ -30,6 +30,7 @@ Description
     entryList = {1,2,3,3,9}
     T = skewTableau(lam,mu,entryList)
 SeeAlso
+    skewTableau
     YngTableau
 ///
 
@@ -40,13 +41,14 @@ Headline
     a type of HashTable representing a (nonskew) Young tableau
 Description
   Text
-    This is a subclass of @TO2{SkewTableau,"SkewTableau"}@. Each object of YngTableau is essentially just a skew tableau with inner
+    This is a subclass of @TO SkewTableau@. Each object of YngTableau is essentially just a skew tableau with inner
     shape $\mu=0$.
   Example
     lam = new Partition from {4,3,2}
     entryList = toList(1..(sum toList lam))
     T = yngTableau(lam,entryList)
 SeeAlso
+    yngTableau
     SkewTableau
 ///
 
@@ -68,18 +70,20 @@ Usage
     skewTableau((lam,mu),entryList)
 Inputs
     lam:Partition
-      the outer shape.
+      the outer shape $\lambda$.
     mu:Partition
-      the inner shape. If not given, then it is assumed to be the $0$ partition.
+      the inner shape $\mu$. If not given, then it is assumed to be the $0$ partition.
     entryList:List
       the filling of the boxes. If not given, then box entries are assumed to be the empty string "".
 Outputs
     T:SkewTableau
-      a skew Young tableau of shape lam/mu with the given filling
+      a skew Young tableau of shape $\lambda/\mu$ with the given filling.
 Consequences
     Item
       The list of entries has length equal to $\sum_{i=1}^{\ell(\lambda)}|\lambda_i-\mu_i|$. E.g.,
       if $\lambda=(2)$ and $\mu=(5)$, then the entry list must have length $3$.
+    Item
+      None of the entries are null.
 Description
   Example
     lam = new Partition from {4,3,2}
@@ -100,7 +104,7 @@ Description
   Example
     skewTableau(new Partition from {-2,-4,2}, new Partition from {1,-1,-1}, {1,2,3,4,5,6,7,8,9})
   Text
-    We may cast an object of type @TO2{YngTableau,"YngTableau"}@ to type SkewTableau.
+    We may cast an object of type @TO YngTableau@ to type SkewTableau.
   Example
     T' = yngTableau(new Partition from {3,1,1})
     skewTableau T'
@@ -129,16 +133,18 @@ Usage
     yngTableau(lam, entryList)
 Inputs
     lam:Partition
-      the shape.
+      the shape $\lambda$.
     entryList:List
       the filling of the boxes. If not given, then box entries are assumed to be the empty string "".
 Outputs
     T:YngTableau
-      a (nonskew) Young tableau of shape lam with the given filling
+      a (nonskew) Young tableau of shape $\lambda$ with the given filling.
 Consequences
     Item
       The list of entries has length equal to $\sum_{i=1}^{\ell(\lambda)}|\lambda_i|$. E.g.,
       if $\lambda=(-2)$, then the entry list must have length $2$.
+    Item
+      None of the entries are @TO null@.
 Description
   Example
     lam = new Partition from {4,3,2}
@@ -154,7 +160,7 @@ Description
   Example
     yngTableau(new Partition from {-2,-4,2})
   Text
-    We may cast an object of type YngTableau to type @TO2{SkewTableau,"SkewTableau"}@.
+    We may cast an object of type YngTableau to type @TO SkewTableau@.
   Example
     T' = yngTableau(new Partition from {3,1,1})
     skewTableau T'
@@ -177,14 +183,14 @@ Usage
     youngDiagram T
 Inputs
     lam:Partition
-      the outer shape.
+      the outer shape $\lambda$.
     mu:Partition
-      the inner shape. If not given, if is assumed to be the $0$ partition.
+      the inner shape $\mu$. If not given, if is assumed to be the $0$ partition.
     T:SkewTableau
       a skew tableau.
 Outputs
     n:Net
-      a net representation of the Young diagram of the given shape
+      a representation of the Young diagram of shape $\lambda/\mu$.
 Description
   Example
     T = skewTableau(new Partition from {4,3,1}, new Partition from {2,1}, {1,2,3,4,5})
@@ -205,17 +211,17 @@ Headline
     a net of the Ferrers diagram
 Usage
     ferrersDiagram(lam, mu)
-    youngDiagramferrersDiagram T
+    ferrersDiagram T
 Inputs
     lam:Partition
-      the outer shape.
+      the outer shape $\lambda$.
     mu:Partition
-      the inner shape. If not given, if is assumed to be the $0$ partition.
+      the inner shape $\mu$. If not given, if is assumed to be the $0$ partition.
     T:SkewTableau
       a skew tableau.
 Outputs
     n:Net
-      a net representation of the Ferrers diagram of the given shape
+      a representation of the Ferrers diagram of shape $\lambda/\mu$.
 Description
   Example
     T = skewTableau(new Partition from {4,3,1}, new Partition from {2,1}, {1,2,3,4,5})
@@ -238,7 +244,7 @@ Inputs
       a skew tableau.
 Outputs
     s:String
-      a string with LaTeX code for reproducting the given skew tableau
+      the LaTeX code for reproducting the given skew tableau.
 Description
   Text
     The LaTeX code uses commands from the LaTeX package @HREF("https://github.com/AndrewMathas/aTableau","aTableau")@.
@@ -269,9 +275,9 @@ Inputs
       a skew tableau.
 Outputs
     lam:Partition
-      the outer shape of T.
+      the outer shape, $\lambda$, of T.
     mu:Partition
-      the inner shape of T.
+      the inner shape, $\mu$, of T.
 Description
   Text
     This returns the original shape used to construct the tableau.
@@ -306,13 +312,13 @@ Key
 Headline
     the shape of a Young tableau
 Usage
-    lam = skewShape T
+    lam = shape T
 Inputs
     T:SkewTableau
       a Young tableau.
 Outputs
     lam:Partition
-      the shape of T.
+      the shape, $\lambda$, of T.
 Description
   Text
     This returns the original shape used to construct the tableau.
@@ -376,12 +382,12 @@ doc ///
 Key
    (numRows, SkewTableau)
 Headline
-    the number of rows in a skew tableau
+    the number of rows in a tableau
 Usage
     numRows T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     n:ZZ
       the number of rows in T.
@@ -401,12 +407,12 @@ doc ///
 Key
    (numColumns, SkewTableau)
 Headline
-    the number of columns in a skew tableau
+    the number of columns in a tableau
 Usage
     numColumns T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     n:ZZ
       the number of columns in T.
@@ -424,7 +430,7 @@ Description
     numColumns T'
 SeeAlso
   (numRows, SkewTableau)
-  colRange
+  columnRange
 ///
 
 doc ///
@@ -436,7 +442,7 @@ Usage
    T^i
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     i:ZZ
       the index of a row.
 Outputs
@@ -444,9 +450,9 @@ Outputs
       the entries in the $i$th row of T.
 Description
   Text
-    Note that the resulting list may contain null entries in places where a box is not present. This means that
+    Note that the resulting list may contain @TO null@ entries in places where a box is not present. This means that
     the notations (T^i)#j, (T_j)#i, and T_(i,j) are all equivalent for valid positions (i,j). However, the notation
-    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return null.
+    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return @TO null@.
   Example
     T = skewTableau(new Partition from {4,3,1,0}, new Partition from {1,1}, {1,2,3,4,5,6})
     for i from 0 to numRows T - 1 do print T^i
@@ -482,7 +488,7 @@ Usage
    T_j
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     j:ZZ
       the index of a column.
 Outputs
@@ -490,24 +496,24 @@ Outputs
       the entries in the $j$th column of T.
 Description
   Text
-    Note that the resulting list may contain null entries in places where a box is not present. This means that
+    Note that the resulting list may contain @TO null@ entries in places where a box is not present. This means that
     the notations (T^i)#j, (T_j)#i, and T_(i,j) are all equivalent for valid positions (i,j). However, the notation
-    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return null.
+    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return @TO null@.
   Example
     T = skewTableau(new Partition from {4,3,1,0}, new Partition from {1,1}, {1,2,3,4,5,6})
-    for i in colRange T do print T_i
+    for i in columnRange T do print T_i
     (T^0)#1
     (T_1)#0
     T_(0,1)
   Text
-    To get the column entries without extra null's, use colEntries.
+    To get the column entries without extra null's, use columnEntries.
   Example
     T'' = skewTableau(new Partition from {3,1}, new Partition from {-2,0,-1}, {1,2,3,4,5,6,7})
     T''_-1
-    colEntries(T'',-1)
+    columnEntries(T'',-1)
 SeeAlso
   (numColumns, SkewTableau)
-  colEntries
+  columnEntries
   (symbol _, SkewTableau, Sequence)
   (symbol ^, SkewTableau, ZZ)
 ///
@@ -522,7 +528,7 @@ Usage
    T_(i,j)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     seq:Sequence
       a pair (i,j) of integers in ZZ.
 Outputs
@@ -531,7 +537,7 @@ Outputs
 Description
   Text
     The notations (T^i)#j, (T_j)#i, and T_(i,j) are all equivalent for valid positions (i,j). However, the notation
-    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return null.
+    T_(i,j) will raise an error for nonvalid positions, whereas the other two will return @TO null@.
   Example
     T = skewTableau(new Partition from {4,3,1,0}, new Partition from {1,1}, {1,2,3,4,5,6})
     (T^0)#1
@@ -544,31 +550,61 @@ SeeAlso
 
 doc ///
 Key
-    colRange
-   (colRange, SkewTableau)
+    columnRange
+   (columnRange, SkewTableau)
 Headline
     the range of column indices of a tableau.
 Usage
-   colRange T
+   columnRange T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     seq:Sequence
       the range of column indices.
 Description
   Text
     Although it is straightforward that the row indices are 0..(numRows T - 1), the analogous sequence does not
-    work for columns since columns may have negative indices. Hence, colRange provides an easy way to iterate
+    work for columns since columns may have negative indices. Hence, columnRange provides an easy way to iterate
     over column indices. The lowest number is the smallest part of the tableau's shape, and the largest number
     is the largest part of its shape.
   Example
     T = skewTableau(new Partition from {8,7,6,6,1}, new Partition from {4,4,3,2,-2}, toList(1..17))
-    colRange T
-    for j in colRange T do print colEntries(T,j)
+    columnRange T
+    for j in columnRange T do print columnEntries(T,j)
 SeeAlso
   (symbol _, SkewTableau, ZZ)
-  colEntries
+  columnEntries
+  rowRange
+  positionList
+///
+
+doc ///
+Key
+    rowRange
+   (rowRange, SkewTableau)
+Headline
+    the range of row indices of a tableau.
+Usage
+   rowRange T
+Inputs
+    T:SkewTableau
+      a tableau.
+Outputs
+    seq:Sequence
+      the range of row indices.
+Description
+  Text
+    Returns the sequence 0..(numRows T - 1).
+  Example
+    T = skewTableau(new Partition from {5,4,2,1,0,0}, new Partition from {2,2,2}, toList(1..6))
+    rowRange T
+    for i in rowRange T do print rowEntries(T,i)
+SeeAlso
+  (symbol ^, SkewTableau, ZZ)
+  rowEntries
+  columnRange
+  positionList
 ///
 
 doc ///
@@ -583,7 +619,7 @@ Usage
    rowEntries(i,T)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     i:ZZ
       the index of a row.
 Outputs
@@ -591,7 +627,7 @@ Outputs
       the entries of row $i$ of T.
 Description
   Text
-    This returns the entries exactly as they appear in the row, as opposed to T^i.
+    This returns the entries exactly as they appear in the row without extra @TO null@ entries, as opposed to T^i.
   Example
     T = skewTableau(new Partition from {6,3,2}, new Partition from {2}, toList(1..9))
     rowEntries(T,0)
@@ -602,17 +638,17 @@ SeeAlso
 
 doc ///
 Key
-    colEntries
-   (colEntries, SkewTableau, ZZ)
-   (colEntries, ZZ, SkewTableau)
+    columnEntries
+   (columnEntries, SkewTableau, ZZ)
+   (columnEntries, ZZ, SkewTableau)
 Headline
    get the entries in a column.
 Usage
-   colEntries(T,j)
-   colEntries(j,T)
+   columnEntries(T,j)
+   columnEntries(j,T)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     j:ZZ
       the index of a column.
 Outputs
@@ -620,10 +656,10 @@ Outputs
       the entries of column $j$ of T.
 Description
   Text
-    This returns the entries of a column without extra null entries, as opposed to T_i.
+    This returns the entries of a column without extra @TO null@ entries, as opposed to T_i.
   Example
     T = skewTableau(new Partition from {6,3,2}, new Partition from {2}, toList(1..9))
-    colEntries(T,0)
+    columnEntries(T,0)
     T_0
 SeeAlso
   (symbol _, SkewTableau, ZZ)
@@ -631,17 +667,17 @@ SeeAlso
 
 doc ///
 Key
-    indexToPosition
-   (indexToPosition, SkewTableau, ZZ)
-   (indexToPosition, ZZ, SkewTableau)
+    toPosition
+   (toPosition, SkewTableau, ZZ)
+   (toPosition, ZZ, SkewTableau)
 Headline
    get the position of a box, given its index.
 Usage
-   indexToPosition(T,k)
-   indexToPosition(k,T)
+   toPosition(T,k)
+   toPosition(k,T)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     k:ZZ
       the index of a box.
 Outputs
@@ -654,7 +690,7 @@ Description
   Example
     T = skewTableau(new Partition from {6,3,2}, new Partition from {2}, toList(10..18))
     (entries T)#5
-    indexToPosition(T,5)
+    toPosition(T,5)
   Text
     We may replace the filling in each box with its index to see the order.
   Example
@@ -662,29 +698,29 @@ Description
   Text
     We may also replace the filling in each box with the corresponding position.
   Example
-    entryList = for i from 0 to size T - 1 list indexToPosition(T,i)
+    entryList = for i from 0 to size T - 1 list toPosition(T,i)
     skewTableau(new Partition from {6,3,2}, new Partition from {2}, entryList)
 SeeAlso
-  positionToIndex
+  toIndex
   positionList
 ///
 
 
 doc ///
 Key
-    positionToIndex
-   (positionToIndex, SkewTableau, Sequence)
-   (positionToIndex, Sequence, SkewTableau)
+    toIndex
+   (toIndex, SkewTableau, Sequence)
+   (toIndex, Sequence, SkewTableau)
 Headline
    get the index of a box, given its position.
 Usage
-   positionToIndex(T,seq)
-   positionToIndex(T,(i,j))
-   positionToIndex(seq,T)
-   positionToIndex((i,j),T)
+   toIndex(T,seq)
+   toIndex(T,(i,j))
+   toIndex(seq,T)
+   toIndex((i,j),T)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     seq:Sequence
       the position (i,j) of a box.
 Outputs
@@ -698,7 +734,7 @@ Description
     T = skewTableau(new Partition from {6,3,2}, new Partition from {2}, toList(10..18))
     thePosition = (1,2)
     T_thePosition
-    theIndex = positionToIndex(T,thePosition)
+    theIndex = toIndex(T,thePosition)
     (entries T)#theIndex
   Text
     We may replace the filling in each box with its index to see the order.
@@ -707,10 +743,10 @@ Description
   Text
     We may also replace the filling in each box with the corresponding position.
   Example
-    entryList = for i from 0 to size T - 1 list indexToPosition(T,i)
+    entryList = for i from 0 to size T - 1 list toPosition(T,i)
     skewTableau(new Partition from {6,3,2}, new Partition from {2}, entryList)
 SeeAlso
-  indexToPosition
+  toPosition
   positionList
 ///
 
@@ -724,7 +760,7 @@ Usage
    positionList T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     l:List
       the positions (i,j) of boxes in T.
@@ -736,8 +772,8 @@ Description
     theList = positionList T
     T' = skewTableau(new Partition from {6,3,2}, new Partition from {2}, theList)
 SeeAlso
-  indexToPosition
-  positionToIndex
+  toPosition
+  toIndex
 ///
 
 doc ///
@@ -750,7 +786,7 @@ Usage
    applyEntries(T,f)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     f:Function
       acts on the entries of T.
 Outputs
@@ -799,7 +835,7 @@ Usage
    components T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     l:List
       a list of all connected components of T.
@@ -820,9 +856,9 @@ Usage
    T1 ++ T2
 Inputs
     T1:SkewTableau
-      a skew Tableau.
+      a tableau.
     T2:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     S:SkewTableau
       a direct sum of T1 and T2.
@@ -843,14 +879,14 @@ doc ///
 Key
    (symbol ||, SkewTableau, SkewTableau)
 Headline
-   vertical concatenation of tableaux
+   vertical concatenation of two tableaux
 Usage
    T1 || T2
 Inputs
     T1:SkewTableau
-      a skew Tableau.
+      a tableau.
     T2:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     S:SkewTableau
       a single tableau with T1 directly above T2.
@@ -901,7 +937,7 @@ Usage
    shift(T,n)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
     n:ZZ
       an additional amount to shift.
 Outputs
@@ -928,7 +964,7 @@ Usage
    unshift(T,n)
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a skew tableau.
     n:ZZ
       an additional amount to shift.
 Outputs
@@ -952,7 +988,7 @@ Usage
    conjugate T
 Inputs
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     S:SkewTableau
       the rows and columns have been switched.
@@ -977,7 +1013,7 @@ Inputs
     thePosition:Sequence
       a pair (i,j) of integers.
     T:SkewTableau
-      a skew Tableau.
+      a tableau.
 Outputs
     n:ZZ
       the hook length of box (i,j) in T.
@@ -1052,9 +1088,9 @@ Inputs
     T:SkewTableau
       a tableau.
     lam:Partition
-      an outer shape.
+      the outer shape, $\lambda$.
     mu:Partition
-      an inner shape.
+      the inner shape, $\mu$.
 Outputs
     b:Boolean
       returns true if both shapes have weakly decreasing parts, and false otherwise.
@@ -1080,9 +1116,9 @@ Inputs
     T:SkewTableau
       a tableau.
     lam:Partition
-      an outer shape.
+      the outer shape, $\lambda$.
     mu:Partition
-      an inner shape.
+      the inner shape, $\mu$.
 Outputs
     b:Boolean
       returns true if both shapes are nonnegative, and false otherwise.
@@ -1105,9 +1141,9 @@ Usage
    allSemistandardTableaux(lam,mu,N)
 Inputs
     lam:Partition
-      an outer shape.
+      the outer shape, $\lambda$.
     mu:Partition
-      an inner shape.
+      the inner shape, $\mu$.
     N:ZZ
       the maximum entry.
 Outputs
@@ -1119,7 +1155,7 @@ Description
     theBag = allSemistandardTableaux(new Partition from {5,4,2}, new Partition from {3,1})
     for i from 0 to 4 do print theBag#i
   Text
-    When the inner partition is $0$, the function numSemistandardTableaux computes the number of SSYT via
+    When the inner partition is $0$, the function @TO numSemistandardTableaux@ computes the number of SSYT via
     the hook-content formula.
   Example
     # allSemistandardTableaux(new Partition from {6,6,5,1,1})
@@ -1139,7 +1175,7 @@ Usage
    numSemistandardTableaux(lam,N)
 Inputs
     lam:Partition
-      the shape.
+      the shape, $\lambda$.
     N:ZZ
       the maximum entry.
 Outputs
@@ -1148,7 +1184,7 @@ Outputs
       to be the length of the shape.
 Description
   Text
-    A bagged list of the tableaux can be created with allSemistandardTableaux.
+    A bagged list of the tableaux can be created with @TO allSemistandardTableaux@.
   Example
     # allSemistandardTableaux(new Partition from {6,6,5,1,1})
     numSemistandardTableaux(new Partition from {6,6,5,1,1})

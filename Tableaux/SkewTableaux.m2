@@ -42,36 +42,6 @@ skewShape SkewTableau := T -> (
     (T#"outerShape", T#"innerShape")
     )
 
--*
-skewShape = method(TypicalValue => Sequence)
-skewShape (Partition,Partition) := (lam,mu) -> (
-    lamNumTrailingZeros := # for i from 1 to #lam list (if lam#-i == 0 then 1 else break);
-    muNumTrailingZeros := # for i from 1 to #mu list (if mu#-i == 0 then 1 else break);
-
-    lamShortened := (toList lam)_(toList(0..(#lam-1-lamNumTrailingZeros)));
-    muShortened := (toList mu)_(toList(0..(#mu-1-muNumTrailingZeros)));
-
-    (new Partition from lamShortened, new Partition from muShortened)
-    )
-skewShape SkewTableau := T -> (
-    skewShape(T#"outerShape", T#"innerShape")
-    )
-
-skewShapePadded = method(TypicalValue => Sequence)
-skewShapePadded (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = skewShape(lam,mu);
-    maxLength := max(#lam,#mu);
-
-    lamPadded := toList(lam)|toList((maxLength - #lam):0);
-    muPadded := toList(mu)|toList((maxLength - #mu):0);
-    
-    (new Partition from lamPadded, new Partition from muPadded)
-    )
-skewShapePadded SkewTableau := T -> (
-    skewShapePadded truncate skewShape T
-    )
-*-
-
 alignToZero = method(TypicalValue => SkewTableau)
 alignToZero (Partition,Partition) := (lam,mu) -> (
     (lam,mu) = standardize (lam,mu);
@@ -125,11 +95,14 @@ listNegativeRows SkewTableau := T -> (
 
 -- retrieving rows and columns
 
-colRange = method(TypicalValue => Sequence)
-colRange SkewTableau := T -> (
+columnRange = method(TypicalValue => Sequence)
+columnRange SkewTableau := T -> (
     (lam,mu) := standardize skewShape normalizeNegativeRows T;
     (min (toList mu | toList lam)..(max (toList lam | toList mu) - 1))
     )
+
+rowRange = method(TypicalValue => Sequence)
+rowRange SkewTableau := T -> (0..(numRows T - 1))
 
 rowEntries = method(TypicalValue => List)
 rowEntries (ZZ,SkewTableau) := (rowIndex,T) -> (
@@ -154,7 +127,7 @@ SkewTableau^ZZ := (T,rowIndex) -> (
         );
     if rowIndex >= #lam or rowIndex < 0 then error "index out of bounds";
 
-    colInds := colRange T;
+    colInds := columnRange T;
 
     theEntries := rowEntries(rowIndex,T);
 
@@ -175,24 +148,25 @@ SkewTableau^ZZ := (T,rowIndex) -> (
 
 SkewTableau_Sequence := (T,thePosition)->(
     (rowIndex,colIndex) := thePosition;
+    (lam,mu) := standardize skewShape normalizeNegativeRows T;
 
-    ans := T^rowIndex#colIndex;
-    if ans === null then error "index out of range";
-    
-    ans
+    if not isMember(rowIndex, rowRange T) then error("index "|toString(rowIndex)|" out of range");
+    if colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index "|toString(colIndex)|" out of range";
+
+    T^rowIndex#colIndex
     )
 
 SkewTableau_ZZ := (T,colIndex) -> (
-    colInds := colRange T;
+    colInds := columnRange T;
     
     if colIndex < min(colInds#0,0) or colIndex > max(colInds#-1,0) then error "index out of bounds";
     
     for rowIndex from 0 to numRows T - 1 list T^rowIndex#colIndex
     )
 
-colEntries = method(TypicalValue => List)
-colEntries (ZZ,SkewTableau) := (colIndex,T) -> delete(null,T_colIndex)
-colEntries (SkewTableau,ZZ) := (T,colIndex) -> colEntries(colIndex,T)
+columnEntries = method(TypicalValue => List)
+columnEntries (ZZ,SkewTableau) := (colIndex,T) -> delete(null,T_colIndex)
+columnEntries (SkewTableau,ZZ) := (T,colIndex) -> columnEntries(colIndex,T)
 
 -- drawing
 
@@ -331,7 +305,7 @@ ferrersDiagram (Partition,Partition) := (lam,mu) -> (
 
     isNegativeRow := listNegativeRows T;
 
-    ans := concatenate for colIndex in colRange T list (
+    ans := concatenate for colIndex in columnRange T list (
         isBox := colIndex >= mu#0 and colIndex < lam#0;
 
         if isBox and isNegativeRow#0 then (
@@ -343,7 +317,7 @@ ferrersDiagram (Partition,Partition) := (lam,mu) -> (
             )
         );
     for rowIndex from 1 to #lam-1 do (
-        rowString := concatenate for colIndex in colRange T list (
+        rowString := concatenate for colIndex in columnRange T list (
             isBox := colIndex >= mu#rowIndex and colIndex < lam#rowIndex;
 
             if isBox and isNegativeRow#rowIndex then (
@@ -361,6 +335,8 @@ ferrersDiagram (Partition,Partition) := (lam,mu) -> (
     )
 ferrersDiagram Partition := lam -> ferrersDiagram(lam,new Partition from {0})
 ferrersDiagram SkewTableau := T -> ferrersDiagram standardize skewShape T
+
+
 
 tex SkewTableau := T -> (
     -- \usepackage{atableau}
@@ -413,7 +389,7 @@ conjugate SkewTableau := T -> (
     
     lam' := conjugate lam;
     mu' := conjugate mu;
-    entryList' := flatten for colIndex from 0 to lam#0-1 list colEntries(colIndex,T);
+    entryList' := flatten for colIndex from 0 to lam#0-1 list columnEntries(colIndex,T);
 
     skewTableau(lam',mu',entryList')
     )
@@ -547,8 +523,8 @@ weight SkewTableau := T -> (
     )
 *-
 
-indexToPosition = method(TypicalValue => Sequence)
-indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
+toPosition = method(TypicalValue => Sequence)
+toPosition (ZZ,SkewTableau) := (theIndex,T) -> (
     if theIndex < 0 then (
         theIndex = size T + theIndex;
         );
@@ -564,10 +540,10 @@ indexToPosition (ZZ,SkewTableau) := (theIndex,T) -> (
             );
         );
     )
-indexToPosition (SkewTableau,ZZ) := (T,theIndex) -> indexToPosition(theIndex,T)
+toPosition (SkewTableau,ZZ) := (T,theIndex) -> toPosition(theIndex,T)
 
-positionToIndex = method(TypicalValue => ZZ)
-positionToIndex (Sequence,SkewTableau) := (thePosition,T) -> (
+toIndex = method(TypicalValue => ZZ)
+toIndex (Sequence,SkewTableau) := (thePosition,T) -> (
     (rowIndex,colIndex) := thePosition;
     (lam,mu) := standardize skewShape normalizeNegativeRows T;
 
@@ -581,11 +557,11 @@ positionToIndex (Sequence,SkewTableau) := (thePosition,T) -> (
             );
         );
     )
-positionToIndex (SkewTableau,Sequence) := (T,thePosition) -> positionToIndex(thePosition,T)
+toIndex (SkewTableau,Sequence) := (T,thePosition) -> toIndex(thePosition,T)
 
 positionList = method(TypicalValue => List)
 positionList SkewTableau := T -> (
-    for i from 0 to size T - 1 list indexToPosition(i,T)
+    for i from 0 to size T - 1 list toPosition(i,T)
     )
 
 boxContent = method(TypicalValue => ZZ)
@@ -624,7 +600,6 @@ truncate (Partition,Partition) := theInput -> (
 
     (new Partition from lamShortened, new Partition from muShortened)
     )
---truncate SkewTableau := theInput -> truncate skewShape theInput#1
 
 pad (Partition,Partition) := (lam,mu) -> (
     maxLength := max(#lam,#mu);
@@ -634,7 +609,6 @@ pad (Partition,Partition) := (lam,mu) -> (
     
     (new Partition from lamPadded, new Partition from muPadded)
     )
---pad SkewTableau := T -> pad skewShape T
 
 standardize = method(TypicalValue => Sequence)
 standardize (Partition,Partition) := (lam,mu) -> pad truncate (lam,mu)

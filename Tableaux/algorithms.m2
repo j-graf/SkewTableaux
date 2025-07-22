@@ -3,7 +3,7 @@
 maxSSYT = method(TypicalValue => SkewTableau)
 maxSSYT (Partition,Partition) := (lam,mu) -> (
     tempT := skewTableau(lam,mu);
-    (lam,mu) = skewShapePadded tempT;
+    (lam,mu) = standardize skewShape tempT;
 
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
         (i,j) := indexToPosition(entryIndex,tempT);
@@ -18,7 +18,7 @@ maxSSYT (Partition,Partition) := (lam,mu) -> (
 minSSYT = method(TypicalValue => SkewTableau)
 minSSYT (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     tempT := skewTableau(lam,mu);
-    (lam,mu) = skewShapePadded tempT;
+    (lam,mu) = standardize skewShape tempT;
     
     entryList := for entryIndex from 0 to sum toList lam - sum toList mu - 1 list (
         (i,j) := indexToPosition(entryIndex,tempT);
@@ -34,7 +34,7 @@ addOneSSYT = method(TypicalValue => SkewTableau)
 addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
     if T_thePosition >= minSSYT_thePosition then return null;
     
-    (lam,mu) := skewShapePadded T;
+    (lam,mu) := standardize skewShape T;
     (rowIndex,colIndex) := thePosition;
 
     if (rowIndex < 0) or (rowIndex >= #lam) then error "index out of range";
@@ -76,7 +76,7 @@ addOneSSYT (SkewTableau,Sequence,SkewTableau) := (T,thePosition,minSSYT) -> (
 
 allSemistandardTableaux = method(TypicalValue => List)
 allSemistandardTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
     (lamList,muList) := (toList lam, toList mu);
 
     if rsort lamList != lamList or rsort muList != muList then error "expected partitions to be weakly decreasing";
@@ -107,7 +107,7 @@ allSemistandardTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     Bag ans
     )
 allSemistandardTableaux (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
     maxEntry := #lam;
     
     allSemistandardTableaux(lam,mu,maxEntry)
@@ -119,12 +119,13 @@ allSemistandardTableaux (Partition,ZZ) := (lam,maxEntry) -> (
     )
 allSemistandardTableaux Partition := lam -> (
     mu := new Partition from {0};
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
     maxEntry := #lam;
     
     allSemistandardTableaux(lam,mu,maxEntry)
     )
-allSemistandardTableaux SkewTableau := T -> allSemistandardTableaux skewShape T
+--allSemistandardTableaux SkewTableau := T -> allSemistandardTableaux truncate skewShape T
+--allSemistandardTableaux (SkewTableau,ZZ) := (T,maxEntry) -> allSemistandardTableaux(truncate skewShape T,maxEntry)
 
 numSemistandardTableaux = method(TypicalValue => ZZ)
 numSemistandardTableaux (Partition,ZZ) := (lam,n) -> (
@@ -149,12 +150,12 @@ numSemistandardTableaux (Partition,ZZ) := (lam,n) -> (
 
     theProd//theDiv
     )
-numSemistandardTableaux Partition := lam -> numSemistandardTableaux(shape lam,# shape lam)
-numSemistandardTableaux YngTableau := T -> numSemistandardTableaux shape T
+numSemistandardTableaux Partition := lam -> numSemistandardTableaux(truncate lam,# truncate lam)
+--numSemistandardTableaux YngTableau := T -> numSemistandardTableaux shape T
 
 allRowWeakTableaux = method(TypicalValue => List)
 allRowWeakTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
 
     if any(0..(#lam-1), i -> mu#i > lam#i) then return Bag {};
 
@@ -170,7 +171,7 @@ allRowWeakTableaux (Partition,Partition,ZZ) := (lam,mu,maxEntry) -> (
     Bag for theSeq in seqOfRows/deepSplice list verticalConcatenate toList sequence theSeq
     )
 allRowWeakTableaux (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
     maxEntry := #lam;
 
     allRowWeakTableaux(lam,mu,maxEntry)
@@ -182,23 +183,23 @@ allRowWeakTableaux (Partition,ZZ) := (lam,maxEntry) -> (
     )
 allRowWeakTableaux Partition := lam -> (
     mu := new Partition from {0};
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
     maxEntry := #lam;
     
     allRowWeakTableaux(lam,mu,maxEntry)
     )
 allRowWeakTableaux (SkewTableau,ZZ) := (T,maxEntry) -> (
-    (lam,mu) := skewShapePadded T;
+    (lam,mu) := standardize skewShape T;
     
     allRowWeakTableaux(lam,mu,maxEntry)
     )
 allRowWeakTableaux SkewTableau := T -> (
-    allRowWeakTableaux skewShapePadded T
+    allRowWeakTableaux standardize skewShape T
     )
 
 allJacobiTrudiDiagrams = method(TypicalValue => List)
 allJacobiTrudiDiagrams (Partition,Partition) := (lam,mu) -> (
-    (lam,mu) = skewShapePadded(lam,mu);
+    (lam,mu) = standardize (lam,mu);
 
     indexProdList := for thePerm in permutations(#lam) list (
         for i from 0 to #lam-1 list (

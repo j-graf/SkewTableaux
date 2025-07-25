@@ -1,10 +1,10 @@
 newPackage(
     "Tableaux",
-    Version => "1.0",
+    Version => "0.5",
     Date => "July 22, 2025",
     Authors => {
 	{Name => "John Graf", Email => "jrgraf@alumni.ncsu.edu", HomePage => "https://j-graf.github.io/"}},
-    Headline => "a package for constructing skew tableaux",
+    Headline => "constructing skew tableaux",
     Keywords => {"Combinatorics"},
     AuxiliaryFiles => true,
     DebuggingMode => false,
@@ -15,32 +15,32 @@ newPackage(
 export {"SkewTableau", "skewTableau",
         "youngDiagram", "ferrersDiagram", "drawInnerShape",
         "skewShape", "standardize", "rowEntries", "columnEntries", "rowRange", "columnRange",
-        "isSkew", "isWeaklyDecreasing", "isNonnegative",
+        "isWeaklyDecreasing", "isNonnegative",
         "toPosition", "toIndex", "positionList", "applyEntries", "applyPositions",
         "verticalConcatenate", "shift", "unshift",
         "boxContent", "hookLength",
         }
 
-export {"YngTableau", "yngTableau",
+export {"YoungTableau", "youngTableau",
         "shape"}
 
 export {"allSemistandardTableaux", "numSemistandardTableaux"}
 
 
     
--- Implimentation of class SkewTableau
+-- Implementation of class SkewTableau
 
 load "Tableaux/SkewTableaux.m2"
 
 
 
--- Implimentation of subclass YngTableau
+-- Implementation of subclass YoungTableau
 
-load "Tableaux/YngTableaux.m2"
+load "Tableaux/YoungTableaux.m2"
 
 
 
--- TODO: Implimentation of subclass Tabloid
+-- TODO: Implementation of subclass Tabloid
 
 -- load "Tableaux/Tabloids.m2"
 

@@ -174,7 +174,7 @@ SkewTableau_Sequence := (T,thePosition)->(
     (rowIndex,colIndex) := thePosition;
     (lam,mu) := standardize skewShape normalizeNegativeRows T;
 
-    if not isMember(rowIndex, rowRange T) then error("index "|toString(rowIndex)|" out of range");
+    if rowIndex < 0 or rowIndex >= numRows T then error("index "|toString(rowIndex)|" out of range");
     if colIndex < mu#rowIndex or colIndex >= lam#rowIndex then error "index "|toString(colIndex)|" out of range";
 
     T^rowIndex#colIndex
@@ -467,10 +467,10 @@ components SkewTableau := T -> (
 -- making new tableau
 
 applyEntries = method(TypicalValue => SkewTableau)
-applyEntries (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(entries T, theBox -> f theBox))
+applyEntries (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(entries T, f))
 
 applyPositions = method(TypicalValue => SkewTableau)
-applyPositions (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(positionList T, thePosition -> f thePosition))
+applyPositions (SkewTableau,Function) := (T,f) -> skewTableau(truncate skewShape T, apply(positionList T, f))
 
 conjugate SkewTableau := T -> (
     if not isWeaklyDecreasing T or not isNonnegative T then error "expected shape to be weakly decreasing and nonnegative";
@@ -575,4 +575,3 @@ hookLength (Sequence,SkewTableau) := (thePosition,T) -> (
 
     1 + (lam#rowIndex - colIndex - 1) + (lam'#colIndex-rowIndex - 1)
     )
-

@@ -1,6 +1,29 @@
 # Tableaux
 Macaulay2 package (work-in-progress) for dealing with (skew) Young tableaux.
 
+# TODO
+
+- Optimization
+  - Caching common functions
+  - Implement algorithms in C++ via `ForeignFunctions`
+- Feature match `SpechtModule`
+  - Class `MutableYoungTableau`
+  - Algorithms
+    - `allStandardTableaux`
+    - `numStandardTableaux`
+    - `allTabloids`
+  - Statistics
+    - `columnStabilizer`
+    - `firstRowDescent`
+    - `readingWord`
+    - `rowStabilizer`
+- More features
+  - Subclass `Tabloid`
+  - Remove subclass `YoungTableau`, and rename `SkewTableau` to `YoungTableau`
+    - Export method `isSkew`
+    - Export methods `outerShape` and `innerShape`
+    - Export method `shape` as alias for `outerShape`, raise error if `isSkew`
+
 # Examples
 
 ## Skew tableau basics

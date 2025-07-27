@@ -1,5 +1,5 @@
 # Tableaux
-Macaulay2 package (work-in-progress) for dealing with (skew) Young tableaux.
+Macaulay2 package for constructing (skew) Young tableaux.
 
 # TODO
 

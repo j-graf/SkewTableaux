@@ -28,7 +28,7 @@ Macaulay2 package for constructing (skew) Young tableaux.
     - `isStandard`
     - `isRowStrict` and `isColumnStrict`
 - Bug fixes/changes
-  - Rename `truncate` to `trim`
+  - Rename `truncate` to `trim` (c.f. package `Permutations`)
 
 # Examples
 

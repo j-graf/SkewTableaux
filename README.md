@@ -27,7 +27,8 @@ Macaulay2 package for constructing (skew) Young tableaux.
     - `isSemistandard`
     - `isStandard`
     - `isRowStrict` and `isColumnStrict`
-    - 
+- Bug fixes/changes
+  - Rename `truncate` to `trim`
 
 # Examples
 

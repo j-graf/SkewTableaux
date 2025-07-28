@@ -23,6 +23,11 @@ Macaulay2 package for constructing (skew) Young tableaux.
     - Export method `isSkew`
     - Export methods `outerShape` and `innerShape`
     - Export method `shape` as alias for `outerShape`, raise error if `isSkew`
+  - More Booleans
+    - `isSemistandard`
+    - `isStandard`
+    - `isRowStrict` and `isColumnStrict`
+    - 
 
 # Examples
 

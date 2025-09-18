@@ -9,7 +9,7 @@ Macaulay2 package for constructing (skew) Young tableaux.
 - Feature match `SpechtModule`
   - Class `MutableYoungTableau` ✅
   - Algorithms
-    - `allStandardTableaux`
+    - `allStandardTableaux` ✅
     - `numStandardTableaux`/`hookLength` ✅
     - `allTabloids`
   - Statistics

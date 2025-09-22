@@ -5,7 +5,16 @@ Macaulay2 package for constructing (skew) Young tableaux.
 
 - Optimization
   - Caching common functions
+  - Algorithm performance improvements
+    - `allStandardTableaux`
+    - `allTabloids`
   - Implement algorithms in C++ via package `ForeignFunctions`?
+
+# Changelog
+
+- Refactor code
+  - Remove subclass `YoungTableau`, and rename `SkewTableau` to `YoungTableau` ✅
+  - Rename `truncate` to `trim` (c.f. package `Permutations`)
 - Feature match `SpechtModule`
   - Class `MutableYoungTableau` ✅
   - Algorithms
@@ -16,20 +25,20 @@ Macaulay2 package for constructing (skew) Young tableaux.
   - Statistics
     - `rowStabilizer` ✅
     - `columnStabilizer` ✅
-    - `firstRowDescent` (leave for `SpechtModule`)
     - `readingWord` ✅
+  - Note: will not impliment
+    -  `firstRowDescent`
 - More features
   - Subclass `Tabloid` ✅
-  - Remove subclass `YoungTableau`, and rename `SkewTableau` to `YoungTableau` ✅
-    - Export method `isSkew` ✅
-    - Export methods `outerShape` and `innerShape` ✅
-    - Export method `shape` as alias for `outerShape`, raise error if `isSkew` ✅
+  - Export method `isSkew` ✅
+  - Export methods `outerShape` and `innerShape` ✅
+  - Export method `shape` as alias for `outerShape`, raise error if `isSkew` ✅
   - More Booleans
     - `isSemistandard` ✅
     - `isStandard` ✅
     - `isRowStrict` and `isColumnStrict` ✅
 - Bug fixes/changes
-  - Rename `truncate` to `trim` (c.f. package `Permutations`)
+  
 
 # Examples
 

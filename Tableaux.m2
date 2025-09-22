@@ -3,8 +3,8 @@ newPackage(
     Version => "0.5",
     Date => "July 22, 2025",
     Authors => {
-	{Name => "John Graf", Email => "jrgraf@alumni.ncsu.edu", HomePage => "https://j-graf.github.io/"}},
-    Headline => "constructing skew tableaux",
+	{Name => "John Graf", Email => "jrgraf@udel.edu", HomePage => "https://j-graf.github.io/"}},
+    Headline => "constructing Young tableaux",
     Keywords => {"Combinatorics"},
     AuxiliaryFiles => true,
     DebuggingMode => false,
@@ -12,37 +12,43 @@ newPackage(
     --Configuration => {"Convention" => "English", "TexPackage" => "aTableau"}
     )
 
-export {"SkewTableau", "skewTableau",
+export {"YoungTableau", "youngTableau",
         "youngDiagram", "ferrersDiagram", "drawInnerShape",
-        "skewShape", "standardize", "rowEntries", "columnEntries", "rowRange", "columnRange",
-        "isWeaklyDecreasing", "isNonnegative",
+        "skewShape", "shape", "outerShape", "innerShape",
+        "standardize", "rowEntries", "columnEntries", "rowRange", "columnRange",
+        "isSkew", "isWeaklyDecreasing", "isNonnegative", "isStandard", "isSemistandard",
         "toPosition", "toIndex", "positionList", "applyEntries", "applyPositions",
         "verticalConcatenate", "shift", "unshift",
-        "boxContent", "hookLength",
+        "boxContent", "hookLength", "isDrawnInner", "rowStabilizer", "columnStabilizer", "isCorner",
+        "readingWord"
         }
 
-export {"YoungTableau", "youngTableau",
-        "shape"}
+export {"MutableYoungTableau", "mutableYoungTableau"}
 
-export {"allSemistandardTableaux", "numSemistandardTableaux"}
+export {"Tabloid", "tabloid",
+        "representative"}
+
+export {"allSemistandardTableaux", "numSemistandardTableaux",
+        "allStandardTableaux", "numStandardTableaux",
+        "allTabloids", "numTabloids"}
 
 
     
--- Implementation of class SkewTableau
-
-load "Tableaux/SkewTableaux.m2"
-
-
-
--- Implementation of subclass YoungTableau
+-- Implementation of class YoungTableau
 
 load "Tableaux/YoungTableaux.m2"
 
 
 
+-- Implementation of subclass MutableYoungTableau
+
+load "Tableaux/MutableYoungTableaux.m2"
+
+
+
 -- TODO: Implementation of subclass Tabloid
 
--- load "Tableaux/Tabloids.m2"
+load "Tableaux/Tabloids.m2"
 
 
 

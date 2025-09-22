@@ -5,13 +5,14 @@ Macaulay2 package for constructing (skew) Young tableaux.
 
 - Optimization
   - Caching common functions
-  - Implement algorithms in C++ via `ForeignFunctions`
+  - Implement algorithms in C++ via package `ForeignFunctions`?
 - Feature match `SpechtModule`
   - Class `MutableYoungTableau` ✅
   - Algorithms
     - `allStandardTableaux` ✅
     - `numStandardTableaux`/`hookLength` ✅
-    - `allTabloids`
+    - `allTabloids` ✅
+    - `numTabloids` ✅
   - Statistics
     - `rowStabilizer` ✅
     - `columnStabilizer` ✅

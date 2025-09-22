@@ -14,7 +14,7 @@ Macaulay2 package for constructing (skew) Young tableaux.
 
 - Refactor code
   - Remove subclass `YoungTableau`, and rename `SkewTableau` to `YoungTableau` ✅
-  - Rename `truncate` to `trim` (c.f. package `Permutations`)
+  - Rename `truncate` to `trim` (c.f. package `Permutations`) ✅
 - Feature match `SpechtModule`
   - Class `MutableYoungTableau` ✅
   - Algorithms

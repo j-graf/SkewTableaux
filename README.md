@@ -27,7 +27,14 @@ Macaulay2 package for constructing (skew) Young tableaux.
     - `columnStabilizer` ✅
     - `readingWord` ✅
   - Note: will not impliment
-    -  `firstRowDescent`
+    - `TableauList`
+      - `addTableau`
+      - `toListOfTableaux`
+    - `firstRowDescent`
+    - `indexTableau`
+    - `listToTableau`
+    - `rowPermutationTableaux`
+    - `tableauToList`
 - More features
   - Subclass `Tabloid` ✅
   - Export method `isSkew` ✅

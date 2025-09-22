@@ -1,11 +1,11 @@
 
 
-TEST /// -- skewTableau, size T, skewShape, truncate skewShape, pad skewShape, standardize
+TEST /// -- youngTableau, size T, skewShape, truncate skewShape, pad skewShape, standardize
 
   lam = new Partition from {4,1,0,-3,0,2,0,0}
   mu = new Partition from {1,0,0,2,-2,-1,-5,-1,0,0}
   entryList = toList(1..20)
-  T = skewTableau(lam,mu,entryList)
+  T = youngTableau(lam,mu,entryList)
 
   assert (toList T#"outerShape" == toList lam and toList T#"innerShape" == toList mu and T#values == entryList)
   assert (size T == 20)
@@ -30,7 +30,7 @@ TEST /// -- numRows, numColumns, rowRange, columnRange, positionList, toIndex, t
   lam = new Partition from {4,1,0,-3,0,2,0,0}
   mu = new Partition from {1,0,0,2,-2,-1,-5,-1,0,0}
   entryList = toList(1..20)
-  T = skewTableau(lam,mu,entryList)
+  T = youngTableau(lam,mu,entryList)
 
   assert(numRows T == max(# truncate lam, # truncate mu))
   assert(numColumns T == max(toList lam | toList mu) - min(toList lam | toList mu))
@@ -58,7 +58,7 @@ TEST /// -- youngTableau
   lam = new Partition from {4,1,0,-3,0,2,0,0}
   mu = new Partition from {1,0,0,2,-2,-1,-5,-1,0,0}
   entryList = toList(1..20)
-  T = skewTableau(lam,mu,entryList)
+  T = youngTableau(lam,mu,entryList)
 
   lam' = new Partition from {6,5,3,1}
   T' = youngTableau(lam')
@@ -77,7 +77,7 @@ TEST /// -- applyEntries, applyPositions
   lam = new Partition from {6,5,5,4,2,1}
   mu = new Partition from {3,2,2}
   entryList = toList(1..(sum toList lam - sum toList mu))
-  T = skewTableau(lam,mu,entryList)
+  T = youngTableau(lam,mu,entryList)
 
   assert(entries applyEntries(T, theBox -> theBox^2) == apply(entries T, theBox -> theBox^2))
   assert(entries applyPositions(T, thePosition -> thePosition) == positionList T)
